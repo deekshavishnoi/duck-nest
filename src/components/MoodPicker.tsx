@@ -15,7 +15,7 @@ export default function MoodPicker({ selected, onSelect, label }: MoodPickerProp
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-amber-700">{label}</p>
+      <p className="text-sm font-medium text-slate-600">{label}</p>
       <div className="flex flex-wrap gap-2">
         {moods.map(([key, config]) => (
           <motion.button
@@ -27,7 +27,7 @@ export default function MoodPicker({ selected, onSelect, label }: MoodPickerProp
               'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border',
               selected === key
                 ? `${config.color} border-current shadow-sm`
-                : 'bg-amber-50/50 text-amber-600/40 border-amber-100 hover:bg-amber-50'
+                : 'bg-blue-50/50 text-blue-600/40 border-blue-100 hover:bg-blue-50'
             )}
           >
             <span className="text-base">{config.emoji}</span>

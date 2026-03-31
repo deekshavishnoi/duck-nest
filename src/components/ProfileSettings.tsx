@@ -25,8 +25,8 @@ export default function ProfileSettings() {
   return (
     <div className="space-y-5">
       <div className="text-center space-y-1">
-        <h1 className="text-2xl font-bold text-amber-900">Our Profiles</h1>
-        <p className="text-sm text-amber-600/40 italic">our little world 🦆</p>
+        <h1 className="text-2xl font-bold text-slate-800">Our Profiles</h1>
+        <p className="text-sm text-blue-600/40 italic">our little world 🦆</p>
       </div>
 
       {/* My Profile Card */}
@@ -62,8 +62,8 @@ export default function ProfileSettings() {
       {!partner && (
         <div className="duck-card p-5 text-center">
           <p className="text-4xl mb-2">🐤</p>
-          <p className="text-sm text-amber-600/50">Your partner hasn&apos;t joined yet.</p>
-          <p className="text-xs text-amber-400 mt-1">Share your invite code below!</p>
+          <p className="text-sm text-blue-600/50">Your partner hasn&apos;t joined yet.</p>
+          <p className="text-xs text-slate-400 mt-1">Share your invite code below!</p>
         </div>
       )}
 
@@ -74,16 +74,16 @@ export default function ProfileSettings() {
         transition={{ delay: 0.3 }}
         className="duck-card p-5"
       >
-        <h2 className="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-1.5">
-          <Link2 className="w-4 h-4 text-amber-500" />
+        <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
+          <Link2 className="w-4 h-4 text-blue-500" />
           Invite Link
         </h2>
-        <p className="text-xs text-amber-600/50 mb-3">
+        <p className="text-xs text-blue-600/50 mb-3">
           Share this code with your partner to link your dashboards together.
         </p>
         {data.invite.code && (
-          <div className="bg-amber-50 rounded-xl px-4 py-2 text-center mb-3 border border-amber-200">
-            <span className="font-mono text-lg font-bold text-amber-800 tracking-widest">{data.invite.code}</span>
+          <div className="bg-blue-50 rounded-xl px-4 py-2 text-center mb-3 border border-blue-200">
+            <span className="font-mono text-lg font-bold text-slate-700 tracking-widest">{data.invite.code}</span>
           </div>
         )}
         <button
@@ -115,7 +115,7 @@ export default function ProfileSettings() {
       >
         <button
           onClick={logOut}
-          className="w-full flex items-center justify-center gap-2 text-sm text-amber-400 hover:text-red-400 transition-colors py-3"
+          className="w-full flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors py-3"
         >
           <LogOut className="w-4 h-4" />
           Log out
@@ -166,7 +166,7 @@ function ProfileCard({
   };
 
   const gradient = isOwn
-    ? 'from-amber-50 to-yellow-50 border-amber-200'
+    ? 'from-blue-50 to-yellow-50 border-blue-200'
     : 'from-green-50 to-emerald-50 border-emerald-200';
 
   return (
@@ -187,7 +187,7 @@ function ProfileCard({
               {profile.avatarUrl ? (
                 <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
               ) : (
-                <User className="w-8 h-8 text-amber-300" />
+                <User className="w-8 h-8 text-slate-300" />
               )}
             </div>
             <div className="absolute inset-0 rounded-2xl bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -209,48 +209,48 @@ function ProfileCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-amber-800">{resolvedDisplayName}</h3>
+            <h3 className="font-semibold text-slate-700">{resolvedDisplayName}</h3>
             {isOwn && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-600">
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-600">
                 🐥 You
               </span>
             )}
           </div>
           {resolvedDisplayName !== profile.name && (
-            <p className="text-[10px] text-amber-500/40 -mt-0.5 mb-1">{profile.name}</p>
+            <p className="text-[10px] text-blue-500/40 -mt-0.5 mb-1">{profile.name}</p>
           )}
 
           {!editing && isOwn ? (
             <div className="space-y-1">
               {profile.email && (
-                <p className="text-xs text-amber-600/50 flex items-center gap-1">
+                <p className="text-xs text-blue-600/50 flex items-center gap-1">
                   <Mail className="w-3 h-3" /> {profile.email}
                 </p>
               )}
               {profile.birthDate && (
-                <p className="text-xs text-amber-600/50 flex items-center gap-1">
+                <p className="text-xs text-blue-600/50 flex items-center gap-1">
                   <Cake className="w-3 h-3" /> {formatDate(profile.birthDate)}
                 </p>
               )}
               <button
                 onClick={() => setEditing(true)}
-                className="text-[10px] text-amber-500 hover:text-amber-600 font-medium mt-1"
+                className="text-[10px] text-blue-500 hover:text-blue-600 font-medium mt-1"
               >
                 Edit profile
               </button>
 
               {/* Name preference toggle — only show if partner gave a nickname */}
               {partnerNicknameForMe && (
-                <div className="mt-2 pt-2 border-t border-amber-200/50">
-                  <p className="text-[10px] text-amber-600/50 mb-1.5">Display name preference</p>
+                <div className="mt-2 pt-2 border-t border-blue-200/50">
+                  <p className="text-[10px] text-blue-600/50 mb-1.5">Display name preference</p>
                   <div className="flex gap-1.5">
                     <button
                       onClick={() => onUpdate({ usePartnerNickname: true })}
                       className={cn(
                         'text-[10px] px-2.5 py-1 rounded-lg font-medium transition-all',
                         usePartner
-                          ? 'bg-amber-500 text-white'
-                          : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-blue-100 text-blue-500 hover:bg-blue-200'
                       )}
                     >
                       Partner&apos;s name: {partnerNicknameForMe}
@@ -260,8 +260,8 @@ function ProfileCard({
                       className={cn(
                         'text-[10px] px-2.5 py-1 rounded-lg font-medium transition-all',
                         !usePartner
-                          ? 'bg-amber-500 text-white'
-                          : 'bg-amber-100 text-amber-500 hover:bg-amber-200'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-blue-100 text-blue-500 hover:bg-blue-200'
                       )}
                     >
                       My name: {profile.displayName || profile.name}
@@ -286,7 +286,7 @@ function ProfileCard({
           ) : (
             <div className="space-y-2 mt-1">
               <div>
-                <label className="text-[10px] text-amber-500/60 mb-0.5 block">Full name</label>
+                <label className="text-[10px] text-blue-500/60 mb-0.5 block">Full name</label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -295,7 +295,7 @@ function ProfileCard({
                 />
               </div>
               <div>
-                <label className="text-[10px] text-amber-500/60 mb-0.5 block">Display name (optional)</label>
+                <label className="text-[10px] text-blue-500/60 mb-0.5 block">Display name (optional)</label>
                 <input
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
@@ -325,7 +325,7 @@ function ProfileCard({
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="text-xs bg-amber-100 text-amber-500 px-4 py-1.5 rounded-xl hover:bg-amber-200 transition-colors"
+                  className="text-xs bg-blue-100 text-blue-500 px-4 py-1.5 rounded-xl hover:bg-blue-200 transition-colors"
                 >
                   Cancel
                 </button>
@@ -364,18 +364,18 @@ function NicknameEditor({
       className="duck-card p-4"
     >
       <div className="flex items-center gap-2 mb-2">
-        <Heart className="w-3.5 h-3.5 text-amber-500" />
-        <h3 className="text-xs font-semibold text-amber-800">Nickname for {partnerName}</h3>
+        <Heart className="w-3.5 h-3.5 text-blue-500" />
+        <h3 className="text-xs font-semibold text-slate-700">Nickname for {partnerName}</h3>
       </div>
-      <p className="text-[10px] text-amber-600/40 mb-3">
+      <p className="text-[10px] text-blue-600/40 mb-3">
         Give your partner a cute nickname — this is how they&apos;ll appear throughout the app (if they allow it).
       </p>
 
       {!editing ? (
         <div className="flex items-center gap-2">
-          <div className="flex-1 bg-amber-50 rounded-xl px-3 py-2 border border-amber-100">
-            <p className="text-sm text-amber-800">
-              {currentNickname || <span className="text-amber-400 italic">No nickname yet</span>}
+          <div className="flex-1 bg-blue-50 rounded-xl px-3 py-2 border border-blue-100">
+            <p className="text-sm text-slate-700">
+              {currentNickname || <span className="text-slate-400 italic">No nickname yet</span>}
             </p>
           </div>
           <button
@@ -408,7 +408,7 @@ function NicknameEditor({
           </button>
           <button
             onClick={() => setEditing(false)}
-            className="text-xs bg-amber-100 text-amber-500 px-3 py-2 rounded-xl hover:bg-amber-200 transition-colors"
+            className="text-xs bg-blue-100 text-blue-500 px-3 py-2 rounded-xl hover:bg-blue-200 transition-colors"
           >
             Cancel
           </button>

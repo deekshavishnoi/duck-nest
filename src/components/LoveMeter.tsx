@@ -20,10 +20,10 @@ function getVibeLabel(mood1: Mood, mood2: Mood): { label: string; emoji: string;
   const cfg2 = MOOD_CONFIG[mood2];
   if (cfg1.low && cfg2.low) return { label: 'Stormy skies — be extra gentle', emoji: '🌧️', color: 'text-slate-500' };
   if (cfg1.low || cfg2.low) return { label: 'One duck needs extra warmth today', emoji: '☁️', color: 'text-blue-400' };
-  if (mood1 === mood2) return { label: 'Perfectly in sync!', emoji: '✨', color: 'text-amber-600' };
+  if (mood1 === mood2) return { label: 'Perfectly in sync!', emoji: '✨', color: 'text-blue-600' };
   if ((mood1 === 'extra-loving' || mood1 === 'head-over-heels') && (mood2 === 'extra-loving' || mood2 === 'head-over-heels'))
-    return { label: 'Overwhelmingly cute together', emoji: '💛', color: 'text-amber-500' };
-  return { label: 'Good vibes together', emoji: '🌻', color: 'text-amber-500' };
+    return { label: 'Overwhelmingly cute together', emoji: '💛', color: 'text-blue-500' };
+  return { label: 'Good vibes together', emoji: '🌻', color: 'text-blue-500' };
 }
 
 export default function LoveMeter() {
@@ -52,14 +52,14 @@ export default function LoveMeter() {
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xl font-bold text-amber-900"
+          className="text-xl font-bold text-slate-800"
         >
           {nestTitle}
         </motion.h1>
-        <p className="text-xs text-amber-600/40 italic">your cozy little world 🦆</p>
+        <p className="text-xs text-blue-600/40 italic">your cozy little world 🦆</p>
         <button
           onClick={() => setShowSettings(true)}
-          className="text-amber-400/40 hover:text-amber-600 transition-colors inline-flex items-center gap-1 text-[10px] mt-1"
+          className="text-slate-400/40 hover:text-blue-600 transition-colors inline-flex items-center gap-1 text-[10px] mt-1"
         >
           <Settings className="w-3 h-3" /> settings
         </button>
@@ -79,10 +79,10 @@ export default function LoveMeter() {
                 exit={{ opacity: 0, y: -10 }}
                 className="duck-card-warm p-4 flex items-start gap-3"
               >
-                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                  <MessageCircleHeart className="w-4 h-4 text-amber-600" />
+                <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <MessageCircleHeart className="w-4 h-4 text-blue-600" />
                 </div>
-                <p className="text-xs text-amber-800/70 leading-relaxed pt-1">{alertMsg}</p>
+                <p className="text-xs text-slate-700/70 leading-relaxed pt-1">{alertMsg}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -96,7 +96,7 @@ export default function LoveMeter() {
         transition={{ delay: 0.1 }}
         className="duck-card p-5"
       >
-        <h2 className="text-sm font-semibold text-amber-800 mb-4 flex items-center gap-1.5">
+        <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-1.5">
           <span className="text-base">🐥</span>
           {partner ? 'Mood Sync' : 'Your Mood'}
         </h2>
@@ -107,19 +107,19 @@ export default function LoveMeter() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setShowMoodPicker(true)}
-            className="text-center p-3 rounded-2xl border-2 border-amber-200 bg-amber-50/50 cursor-pointer min-w-[110px] transition-all hover:border-amber-300"
+            className="text-center p-3 rounded-2xl border-2 border-blue-200 bg-blue-50/50 cursor-pointer min-w-[110px] transition-all hover:border-blue-300"
           >
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center overflow-hidden mb-1.5">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden mb-1.5">
               {currentUser?.avatarUrl ? (
                 <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-2xl">{myConfig.emoji}</span>
               )}
             </div>
-            <p className="text-xs text-amber-800 font-semibold">{myDisplayName || 'You'}</p>
-            <p className="text-[10px] text-amber-600/50">{myConfig.emoji} {myConfig.label}</p>
+            <p className="text-xs text-slate-700 font-semibold">{myDisplayName || 'You'}</p>
+            <p className="text-[10px] text-blue-600/50">{myConfig.emoji} {myConfig.label}</p>
             {myMood.feeling && (
-              <p className="text-[10px] text-amber-400 mt-1 italic truncate max-w-[100px]">&ldquo;{myMood.feeling}&rdquo;</p>
+              <p className="text-[10px] text-slate-400 mt-1 italic truncate max-w-[100px]">&ldquo;{myMood.feeling}&rdquo;</p>
             )}
           </motion.button>
 
@@ -153,10 +153,10 @@ export default function LoveMeter() {
                           <span className="text-2xl">{theirConfig.emoji}</span>
                         )}
                       </div>
-                      <p className="text-xs text-amber-800 font-semibold">{partnerDisplayName}</p>
-                      <p className="text-[10px] text-amber-600/50">{theirConfig.emoji} {theirConfig.label}</p>
+                      <p className="text-xs text-slate-700 font-semibold">{partnerDisplayName}</p>
+                      <p className="text-[10px] text-blue-600/50">{theirConfig.emoji} {theirConfig.label}</p>
                       {theirMood.feeling && (
-                        <p className="text-[10px] text-amber-400 mt-1 italic truncate max-w-[100px]">&ldquo;{theirMood.feeling}&rdquo;</p>
+                        <p className="text-[10px] text-slate-400 mt-1 italic truncate max-w-[100px]">&ldquo;{theirMood.feeling}&rdquo;</p>
                       )}
                     </div>
                   </>
@@ -165,18 +165,18 @@ export default function LoveMeter() {
             </>
           ) : (
             /* Solo — partner not joined yet */
-            <div className="text-center p-3 rounded-2xl border-2 border-dashed border-amber-200 min-w-[110px]">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-50 flex items-center justify-center mb-1.5">
+            <div className="text-center p-3 rounded-2xl border-2 border-dashed border-blue-200 min-w-[110px]">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-50 flex items-center justify-center mb-1.5">
                 <span className="text-2xl">🐤</span>
               </div>
-              <p className="text-xs text-amber-600/50 font-medium">Partner</p>
-              <p className="text-[10px] text-amber-400 mt-0.5">Not here yet</p>
-              <p className="text-[10px] text-amber-400/60 mt-1">Invite from profile!</p>
+              <p className="text-xs text-blue-600/50 font-medium">Partner</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Not here yet</p>
+              <p className="text-[10px] text-slate-400/60 mt-1">Invite from profile!</p>
             </div>
           )}
         </div>
 
-        <p className="text-center text-[10px] text-amber-400/50 mb-1">Tap your profile to update your mood</p>
+        <p className="text-center text-[10px] text-slate-400/50 mb-1">Tap your profile to update your mood</p>
       </motion.div>
 
       {/* Mood Update Panel */}
@@ -199,8 +199,8 @@ export default function LoveMeter() {
         className="duck-card p-5"
       >
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-amber-800 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+          <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-blue-500" />
             Love Level
           </h2>
           <motion.button
@@ -224,7 +224,7 @@ export default function LoveMeter() {
             {loveMeter.level}%
           </motion.span>
         </div>
-        <div className="w-full h-3 bg-amber-100 rounded-full overflow-hidden">
+        <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
           <motion.div
             className="h-full rounded-full"
             style={{ background: 'linear-gradient(90deg, #fde68a, #f59e0b, #d97706)' }}
@@ -233,7 +233,7 @@ export default function LoveMeter() {
             transition={{ duration: 1, ease: 'easeOut' }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-amber-400/50 mt-1 px-1">
+        <div className="flex justify-between text-[10px] text-slate-400/50 mt-1 px-1">
           <span>just vibin&apos;</span>
           <span>inseparable</span>
         </div>
@@ -257,7 +257,7 @@ export default function LoveMeter() {
         transition={{ delay: 0.5 }}
         className="text-center py-3"
       >
-        <p className="text-xs text-amber-400/40 italic">
+        <p className="text-xs text-slate-400/40 italic">
           &ldquo;Two little ducks, waddling through life together.&rdquo; 🦆🦆
         </p>
       </motion.div>
@@ -303,17 +303,17 @@ function MoodUpdatePanel({
       className="duck-card-warm p-5"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-amber-800">
+        <h3 className="text-sm font-semibold text-slate-700">
           How are you feeling, {person}?
         </h3>
-        <button onClick={onClose} className="text-amber-400 hover:text-amber-600">
+        <button onClick={onClose} className="text-slate-400 hover:text-blue-600">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       <div className="space-y-3">
         <div>
-          <p className="text-xs text-amber-600/50 mb-2">Pick your mood</p>
+          <p className="text-xs text-blue-600/50 mb-2">Pick your mood</p>
           <div className="flex flex-wrap gap-1.5">
             {moods.map(([key, config]) => (
               <motion.button
@@ -325,7 +325,7 @@ function MoodUpdatePanel({
                   'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all border',
                   mood === key
                     ? `${config.color} border-current shadow-sm`
-                    : 'bg-white/60 text-amber-600/40 border-amber-100 hover:bg-white'
+                    : 'bg-white/60 text-blue-600/40 border-blue-100 hover:bg-white'
                 )}
               >
                 <span className="text-sm">{config.emoji}</span>
@@ -336,7 +336,7 @@ function MoodUpdatePanel({
         </div>
 
         <div>
-          <p className="text-xs text-amber-600/50 mb-1">How are you feeling today?</p>
+          <p className="text-xs text-blue-600/50 mb-1">How are you feeling today?</p>
           <input
             value={feeling}
             onChange={(e) => setFeeling(e.target.value)}
@@ -346,7 +346,7 @@ function MoodUpdatePanel({
         </div>
 
         <div>
-          <p className="text-xs text-amber-600/50 mb-1">Leave a little note (optional)</p>
+          <p className="text-xs text-blue-600/50 mb-1">Leave a little note (optional)</p>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -402,16 +402,16 @@ function SettingsModal({
         className="duck-card p-6 w-full max-w-sm space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-amber-800 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-amber-500" /> Nest Settings
+          <h2 className="font-semibold text-slate-700 flex items-center gap-2">
+            <Settings className="w-4 h-4 text-blue-500" /> Nest Settings
           </h2>
-          <button type="button" onClick={onClose} className="text-amber-400 hover:text-amber-600">
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-blue-600">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div>
-          <label className="text-xs text-amber-600/50 mb-1 block">Anniversary / start date</label>
+          <label className="text-xs text-blue-600/50 mb-1 block">Anniversary / start date</label>
           <input
             type="date"
             value={date}

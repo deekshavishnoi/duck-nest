@@ -28,25 +28,25 @@ export default function CountdownTimer() {
       className="duck-card-warm p-5"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
           <span className="text-xl">🦆</span>
         </div>
         <div>
-          <p className="text-xs text-amber-600/50">
+          <p className="text-xs text-blue-600/50">
             {subtitle}
           </p>
-          <p className="text-2xl font-bold text-amber-900">
-            {days} <span className="text-sm font-normal text-amber-600/40">days</span>
+          <p className="text-2xl font-bold text-slate-800">
+            {days} <span className="text-sm font-normal text-blue-600/40">days</span>
           </p>
           {months > 0 && (
-            <p className="text-[10px] text-amber-400">
+            <p className="text-[10px] text-slate-400">
               that&apos;s {years > 0 ? `${years} year${years > 1 ? 's' : ''} and ` : ''}{months % 12} month{months % 12 !== 1 ? 's' : ''}!
             </p>
           )}
         </div>
         <div className="ml-auto text-right">
           <p className="text-lg">🌻</p>
-          <p className="text-[10px] text-amber-500/40">and counting</p>
+          <p className="text-[10px] text-blue-500/40">and counting</p>
         </div>
       </div>
     </motion.div>

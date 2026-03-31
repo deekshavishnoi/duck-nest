@@ -18,8 +18,8 @@ export default function MemoryBlog() {
   return (
     <div className="space-y-5">
       <div className="text-center space-y-1">
-        <h1 className="text-2xl font-bold text-amber-900">Memories</h1>
-        <p className="text-sm text-amber-600/40">
+        <h1 className="text-2xl font-bold text-slate-800">Memories</h1>
+        <p className="text-sm text-blue-600/40">
           {data.memories.length} moment{data.memories.length !== 1 ? 's' : ''} captured
         </p>
       </div>
@@ -27,8 +27,8 @@ export default function MemoryBlog() {
       {sorted.length === 0 && (
         <div className="text-center py-16">
           <p className="text-5xl mb-3">📷</p>
-          <p className="text-sm text-amber-600/50">No memories yet.</p>
-          <p className="text-xs text-amber-400 mt-1">
+          <p className="text-sm text-blue-600/50">No memories yet.</p>
+          <p className="text-xs text-slate-400 mt-1">
             Complete a date and upload a photo to start your scrapbook 🐥
           </p>
         </div>
@@ -43,7 +43,7 @@ export default function MemoryBlog() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.05 }}
             onClick={() => setSelectedId(memory.id)}
-            className="relative aspect-square rounded-2xl overflow-hidden group bg-amber-50"
+            className="relative aspect-square rounded-2xl overflow-hidden group bg-blue-50"
           >
             <img
               src={memory.imageUrl}
@@ -94,16 +94,16 @@ export default function MemoryBlog() {
                 </button>
               </div>
               <div className="p-5 space-y-2">
-                <h3 className="font-semibold text-amber-800">{selected.title}</h3>
+                <h3 className="font-semibold text-slate-700">{selected.title}</h3>
                 {selected.caption && (
-                  <p className="text-sm text-amber-700/60 italic">&ldquo;{selected.caption}&rdquo;</p>
+                  <p className="text-sm text-slate-600/60 italic">&ldquo;{selected.caption}&rdquo;</p>
                 )}
-                <p className="text-xs text-amber-400">
+                <p className="text-xs text-slate-400">
                   {formatDate(selected.completedAt)}
                 </p>
                 <button
                   onClick={() => { deleteMemory(selected.id); setSelectedId(null); }}
-                  className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-red-400 transition-colors mt-2"
+                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-400 transition-colors mt-2"
                 >
                   <Trash2 className="w-3.5 h-3.5" /> Remove memory
                 </button>

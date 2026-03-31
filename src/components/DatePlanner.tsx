@@ -6,7 +6,7 @@ import { useApp } from '@/hooks/useAppData';
 import { DATE_CATEGORY_CONFIG, DateCategory, DateIdea, ChecklistItem } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import {
-  Plus, Shuffle, Check, Trash2, Sparkles, X, MapPin, Clock,
+  Plus, Check, Trash2, X, MapPin, Clock,
   Pencil, ExternalLink, ListChecks, CalendarHeart, ChevronDown,
   ChevronUp, AlertCircle, Upload,
 } from 'lucide-react';
@@ -34,7 +34,6 @@ export default function DatePlanner() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [surprise, setSurprise] = useState<DateIdea | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
   const [completingDate, setCompletingDate] = useState<DateIdea | null>(null);
 
@@ -43,33 +42,17 @@ export default function DatePlanner() {
   const filtered = filter === 'all' ? upcoming : upcoming.filter((d) => d.category === filter);
   const approaching = useMemo(() => getApproachingDates(data.dates), [data.dates]);
 
-  const handleSurprise = () => {
-    if (upcoming.length === 0) return;
-    const pick = upcoming[Math.floor(Math.random() * upcoming.length)];
-    setSurprise(pick);
-  };
-
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-amber-900">Our Dates</h1>
-          <p className="text-sm text-amber-600/40">
+          <h1 className="text-2xl font-bold text-slate-800">Our Dates</h1>
+          <p className="text-sm text-blue-600/40">
             {upcoming.length} adventure{upcoming.length !== 1 ? 's' : ''} waiting · {completed.length} done
           </p>
         </div>
-        <div className="flex gap-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleSurprise}
-            className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-600 px-3 py-2 rounded-full hover:bg-amber-100 transition-colors font-medium"
-          >
-            <Shuffle className="w-3.5 h-3.5" />
-            Surprise us
-          </motion.button>
-          <motion.button
+        <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => { setEditingId(null); setShowAdd(true); }}
@@ -78,7 +61,6 @@ export default function DatePlanner() {
             <Plus className="w-3.5 h-3.5" />
             Add
           </motion.button>
-        </div>
       </div>
 
       {/* Approaching Date Reminders */}
@@ -97,18 +79,18 @@ export default function DatePlanner() {
                   key={`reminder-${date.id}`}
                   className="duck-card-warm p-3 flex items-center gap-3"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <CalendarHeart className="w-4 h-4 text-amber-600" />
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <CalendarHeart className="w-4 h-4 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-amber-700">
+                    <p className="text-xs font-medium text-slate-600">
                       {days === 0
                         ? "Today's the day! 🎉"
                         : days === 1
                           ? 'Tomorrow! Adventure time is almost here 🐥'
                           : `Coming up in ${days} days ✨`}
                     </p>
-                    <p className="text-[11px] text-amber-600/50 truncate">
+                    <p className="text-[11px] text-blue-600/50 truncate">
                       {date.emoji} {date.title}
                       {date.location && ` · ${date.location}`}
                     </p>
@@ -120,46 +102,13 @@ export default function DatePlanner() {
         )}
       </AnimatePresence>
 
-      {/* Surprise Modal */}
-      <AnimatePresence>
-        {surprise && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="duck-card-warm p-6 text-center"
-          >
-            <Sparkles className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-            <p className="text-xs text-amber-500 font-medium mb-1">Your next adventure is...</p>
-            <p className="text-xl font-bold text-amber-900 mb-1">
-              {surprise.emoji} {surprise.title}
-            </p>
-            <p className="text-sm text-amber-700/60 mb-3">{surprise.description}</p>
-            <div className="flex gap-2 justify-center">
-              <button
-                onClick={() => { setCompletingDate(surprise); setSurprise(null); }}
-                className="text-xs bg-green-50 text-green-600 px-4 py-2 rounded-full hover:bg-green-100 transition-colors font-medium"
-              >
-                Let&apos;s do it! ✓
-              </button>
-              <button
-                onClick={() => setSurprise(null)}
-                className="text-xs bg-amber-50 text-amber-500 px-4 py-2 rounded-full hover:bg-amber-100 transition-colors font-medium"
-              >
-                Maybe later
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Category Filter */}
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFilter('all')}
           className={cn(
             'text-xs px-3 py-1.5 rounded-full font-medium transition-all',
-            filter === 'all' ? 'bg-amber-800 text-white' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'
+            filter === 'all' ? 'bg-slate-700 text-white' : 'bg-blue-50 text-blue-500 hover:bg-blue-100'
           )}
         >
           All
@@ -171,7 +120,7 @@ export default function DatePlanner() {
               onClick={() => setFilter(key)}
               className={cn(
                 'text-xs px-3 py-1.5 rounded-full font-medium transition-all flex items-center gap-1',
-                filter === key ? `${cfg.color} shadow-sm` : 'bg-amber-50 text-amber-500 hover:bg-amber-100'
+                filter === key ? `${cfg.color} shadow-sm` : 'bg-blue-50 text-blue-500 hover:bg-blue-100'
               )}
             >
               {cfg.emoji} {cfg.label}
@@ -202,7 +151,7 @@ export default function DatePlanner() {
       {filtered.length === 0 && !showCompleted && (
         <div className="text-center py-10">
           <p className="text-4xl mb-2">🦆</p>
-          <p className="text-sm text-amber-600/40">
+          <p className="text-sm text-blue-600/40">
             No date ideas here yet. Plan your next adventure together!
           </p>
         </div>
@@ -213,7 +162,7 @@ export default function DatePlanner() {
         <div>
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className="flex items-center gap-2 text-sm text-amber-600/40 hover:text-amber-700 transition-colors font-medium w-full"
+            className="flex items-center gap-2 text-sm text-blue-600/40 hover:text-slate-600 transition-colors font-medium w-full"
           >
             {showCompleted ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             Completed adventures ({completed.length})
@@ -238,9 +187,9 @@ export default function DatePlanner() {
                     <div className="flex items-center gap-3">
                       <span className="text-lg">{idea.emoji}</span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm text-amber-700/50 line-through">{idea.title}</h3>
+                        <h3 className="font-medium text-sm text-slate-600/50 line-through">{idea.title}</h3>
                         {idea.completedAt && (
-                          <p className="text-[10px] text-amber-400">{formatDate(idea.completedAt)}</p>
+                          <p className="text-[10px] text-slate-400">{formatDate(idea.completedAt)}</p>
                         )}
                       </div>
                       <div className="flex gap-1">
@@ -253,7 +202,7 @@ export default function DatePlanner() {
                         </button>
                         <button
                           onClick={() => deleteDateIdea(idea.id)}
-                          className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -320,7 +269,7 @@ function DateCard({
       transition={{ delay: index * 0.04 }}
       className={cn(
         'duck-card overflow-hidden',
-        isApproaching && 'ring-2 ring-amber-300/50'
+        isApproaching && 'ring-2 ring-blue-300/50'
       )}
     >
       <div className="p-4">
@@ -328,7 +277,7 @@ function DateCard({
           <span className="text-2xl mt-0.5">{idea.emoji}</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-              <h3 className="font-semibold text-sm text-amber-900">{idea.title}</h3>
+              <h3 className="font-semibold text-sm text-slate-800">{idea.title}</h3>
               <span
                 className={cn(
                   'text-[10px] px-2 py-0.5 rounded-full font-medium',
@@ -338,28 +287,28 @@ function DateCard({
                 {DATE_CATEGORY_CONFIG[idea.category].label}
               </span>
               {isApproaching && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-0.5">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-100 text-slate-600 flex items-center gap-0.5">
                   <AlertCircle className="w-2.5 h-2.5" />
                   Soon!
                 </span>
               )}
             </div>
-            <p className="text-xs text-amber-700/50">{idea.description}</p>
+            <p className="text-xs text-slate-600/50">{idea.description}</p>
             <div className="flex items-center gap-3 mt-1.5 flex-wrap">
               {idea.scheduledFor && (
-                <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
                   <Clock className="w-3 h-3" />
                   {formatDate(idea.scheduledFor)}
                 </span>
               )}
               {idea.location && (
-                <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
                   <MapPin className="w-3 h-3" />
                   {idea.location}
                 </span>
               )}
               {idea.checklist && idea.checklist.length > 0 && (
-                <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
                   <ListChecks className="w-3 h-3" />
                   {idea.checklist.filter((c) => c.checked).length}/{idea.checklist.length}
                 </span>
@@ -368,17 +317,17 @@ function DateCard({
           </div>
           <div className="flex gap-1 flex-shrink-0">
             {hasDetails && (
-              <button onClick={onToggleExpand} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-amber-600 hover:bg-amber-100 transition-colors">
+              <button onClick={onToggleExpand} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-600 hover:bg-blue-100 transition-colors">
                 {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             )}
-            <button onClick={onEdit} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-blue-400 hover:bg-blue-50 transition-colors">
+            <button onClick={onEdit} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-400 hover:bg-blue-50 transition-colors">
               <Pencil className="w-4 h-4" />
             </button>
-            <button onClick={onToggleDone} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-green-500 hover:bg-green-50 transition-colors">
+            <button onClick={onToggleDone} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-green-500 hover:bg-green-50 transition-colors">
               <Check className="w-4 h-4" />
             </button>
-            <button onClick={onDelete} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-red-400 hover:bg-red-50 transition-colors">
+            <button onClick={onDelete} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
@@ -392,20 +341,20 @@ function DateCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-amber-100"
+            className="border-t border-blue-100"
           >
-            <div className="p-4 pt-3 space-y-2.5 bg-amber-50/30">
+            <div className="p-4 pt-3 space-y-2.5 bg-blue-50/30">
               {idea.location && (
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-amber-700/60">{idea.location}</p>
+                    <p className="text-xs text-slate-600/60">{idea.location}</p>
                     {idea.mapsLink && (
                       <a
                         href={idea.mapsLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] text-amber-500 hover:text-amber-600 flex items-center gap-0.5 mt-0.5"
+                        className="text-[10px] text-blue-500 hover:text-blue-600 flex items-center gap-0.5 mt-0.5"
                       >
                         Open in Maps <ExternalLink className="w-2.5 h-2.5" />
                       </a>
@@ -415,25 +364,25 @@ function DateCard({
               )}
               {idea.notes && (
                 <div>
-                  <p className="text-[10px] text-amber-500/50 font-medium mb-0.5">Notes</p>
-                  <p className="text-xs text-amber-700/60 whitespace-pre-wrap">{idea.notes}</p>
+                  <p className="text-[10px] text-blue-500/50 font-medium mb-0.5">Notes</p>
+                  <p className="text-xs text-slate-600/60 whitespace-pre-wrap">{idea.notes}</p>
                 </div>
               )}
               {idea.itinerary && (
                 <div>
-                  <p className="text-[10px] text-amber-500/50 font-medium mb-0.5">Itinerary</p>
-                  <p className="text-xs text-amber-700/60 whitespace-pre-wrap">{idea.itinerary}</p>
+                  <p className="text-[10px] text-blue-500/50 font-medium mb-0.5">Itinerary</p>
+                  <p className="text-xs text-slate-600/60 whitespace-pre-wrap">{idea.itinerary}</p>
                 </div>
               )}
               {idea.reminderNote && (
                 <div>
-                  <p className="text-[10px] text-amber-500/50 font-medium mb-0.5">Reminder</p>
-                  <p className="text-xs text-amber-700/60">{idea.reminderNote}</p>
+                  <p className="text-[10px] text-blue-500/50 font-medium mb-0.5">Reminder</p>
+                  <p className="text-xs text-slate-600/60">{idea.reminderNote}</p>
                 </div>
               )}
               {idea.checklist && idea.checklist.length > 0 && (
                 <div>
-                  <p className="text-[10px] text-amber-500/50 font-medium mb-1">Checklist</p>
+                  <p className="text-[10px] text-blue-500/50 font-medium mb-1">Checklist</p>
                   <div className="space-y-1">
                     {idea.checklist.map((item) => (
                       <button
@@ -446,7 +395,7 @@ function DateCard({
                             'w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0',
                             item.checked
                               ? 'bg-green-100 border-green-300 text-green-500'
-                              : 'border-amber-200 group-hover:border-green-300'
+                              : 'border-blue-200 group-hover:border-green-300'
                           )}
                         >
                           {item.checked && <Check className="w-2.5 h-2.5" />}
@@ -454,7 +403,7 @@ function DateCard({
                         <span
                           className={cn(
                             'text-xs transition-colors',
-                            item.checked ? 'text-amber-400 line-through' : 'text-amber-700/60'
+                            item.checked ? 'text-slate-400 line-through' : 'text-slate-600/60'
                           )}
                         >
                           {item.text}
@@ -558,8 +507,8 @@ function DateFormModal({
         className="duck-card p-5 w-full max-w-md space-y-3 max-h-[85vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-amber-800">{isEdit ? 'Edit Date' : 'New Date Idea'}</h2>
-          <button type="button" onClick={onClose} className="text-amber-400 hover:text-amber-600">
+          <h2 className="font-semibold text-slate-700">{isEdit ? 'Edit Date' : 'New Date Idea'}</h2>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-blue-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -598,7 +547,7 @@ function DateFormModal({
                   onClick={() => setCategory(key)}
                   className={cn(
                     'text-xs px-3 py-1.5 rounded-full font-medium transition-all',
-                    category === key ? `${cfg.color} shadow-sm` : 'bg-amber-50 text-amber-500'
+                    category === key ? `${cfg.color} shadow-sm` : 'bg-blue-50 text-blue-500'
                   )}
                 >
                   {cfg.emoji} {cfg.label}
@@ -609,48 +558,48 @@ function DateFormModal({
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="text-[10px] text-amber-500/50 mb-0.5 block">Date</label>
+              <label className="text-[10px] text-blue-500/50 mb-0.5 block">Date</label>
               <input type="date" value={scheduledFor} onChange={(e) => setScheduledFor(e.target.value)} className="w-full duck-input" />
             </div>
             <div className="flex-1">
-              <label className="text-[10px] text-amber-500/50 mb-0.5 block">Time</label>
+              <label className="text-[10px] text-blue-500/50 mb-0.5 block">Time</label>
               <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full duck-input" />
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] text-amber-500/50 mb-0.5 block">Location</label>
+            <label className="text-[10px] text-blue-500/50 mb-0.5 block">Location</label>
             <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Where is this happening?" className="w-full duck-input" />
           </div>
           <div>
-            <label className="text-[10px] text-amber-500/50 mb-0.5 block">Google Maps link</label>
+            <label className="text-[10px] text-blue-500/50 mb-0.5 block">Google Maps link</label>
             <input value={mapsLink} onChange={(e) => setMapsLink(e.target.value)} placeholder="https://maps.google.com/..." className="w-full duck-input" />
           </div>
 
           <div>
-            <label className="text-[10px] text-amber-500/50 mb-0.5 block">Notes</label>
+            <label className="text-[10px] text-blue-500/50 mb-0.5 block">Notes</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any extra thoughts..." rows={2} className="w-full duck-input resize-none" />
           </div>
 
           <div>
-            <label className="text-[10px] text-amber-500/50 mb-0.5 block">Itinerary (optional)</label>
+            <label className="text-[10px] text-blue-500/50 mb-0.5 block">Itinerary (optional)</label>
             <textarea value={itinerary} onChange={(e) => setItinerary(e.target.value)} placeholder="Step by step plan..." rows={2} className="w-full duck-input resize-none" />
           </div>
 
           <div>
-            <label className="text-[10px] text-amber-500/50 mb-0.5 block">Reminder / prep notes</label>
+            <label className="text-[10px] text-blue-500/50 mb-0.5 block">Reminder / prep notes</label>
             <input value={reminderNote} onChange={(e) => setReminderNote(e.target.value)} placeholder="What to prepare beforehand..." className="w-full duck-input" />
           </div>
 
           <div>
-            <label className="text-[10px] text-amber-500/50 mb-1 block">Checklist</label>
+            <label className="text-[10px] text-blue-500/50 mb-1 block">Checklist</label>
             {checklist.length > 0 && (
               <div className="space-y-1 mb-2">
                 {checklist.map((item) => (
                   <div key={item.id} className="flex items-center gap-2">
-                    <ListChecks className="w-3 h-3 text-amber-400" />
-                    <span className="text-xs text-amber-700/60 flex-1">{item.text}</span>
-                    <button type="button" onClick={() => removeCheckItem(item.id)} className="text-amber-300 hover:text-red-400">
+                    <ListChecks className="w-3 h-3 text-slate-400" />
+                    <span className="text-xs text-slate-600/60 flex-1">{item.text}</span>
+                    <button type="button" onClick={() => removeCheckItem(item.id)} className="text-slate-300 hover:text-red-400">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -665,7 +614,7 @@ function DateFormModal({
                 placeholder="Add item..."
                 className="flex-1 duck-input text-xs"
               />
-              <button type="button" onClick={addCheckItem} className="text-xs bg-amber-100 text-amber-600 px-3 py-1.5 rounded-xl hover:bg-amber-200 transition-colors">
+              <button type="button" onClick={addCheckItem} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-200 transition-colors">
                 Add
               </button>
             </div>
@@ -727,22 +676,22 @@ function MemoryCaptureModal({
       >
         <div className="text-center space-y-2">
           <p className="text-3xl">{date.emoji}</p>
-          <h2 className="font-semibold text-amber-800">{date.title}</h2>
-          <p className="text-xs text-amber-500/50">Upload a picture to capture this memory 🐥</p>
+          <h2 className="font-semibold text-slate-700">{date.title}</h2>
+          <p className="text-xs text-blue-500/50">Upload a picture to capture this memory 🐥</p>
         </div>
 
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="w-full aspect-[4/3] rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/50 flex flex-col items-center justify-center gap-2 hover:bg-amber-50 transition-colors overflow-hidden"
+          className="w-full aspect-[4/3] rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/50 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 transition-colors overflow-hidden"
         >
           {imageUrl ? (
             <img src={imageUrl} alt="" className="w-full h-full object-cover rounded-2xl" />
           ) : (
             <>
-              <Upload className="w-8 h-8 text-amber-400" />
-              <p className="text-xs text-amber-500 font-medium">Tap to upload a photo</p>
-              <p className="text-[10px] text-amber-400">Max 5MB</p>
+              <Upload className="w-8 h-8 text-slate-400" />
+              <p className="text-xs text-blue-500 font-medium">Tap to upload a photo</p>
+              <p className="text-[10px] text-slate-400">Max 5MB</p>
             </>
           )}
         </button>
@@ -759,7 +708,7 @@ function MemoryCaptureModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-amber-100 text-amber-600 py-3 rounded-2xl text-sm font-medium hover:bg-amber-200 transition-colors"
+            className="flex-1 bg-blue-100 text-blue-600 py-3 rounded-2xl text-sm font-medium hover:bg-blue-200 transition-colors"
           >
             Cancel
           </button>

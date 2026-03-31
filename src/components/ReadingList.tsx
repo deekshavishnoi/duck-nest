@@ -7,6 +7,7 @@ import { ReadingTab, ReadingStatus, ReadingItem, READING_STATUS_CONFIG } from '@
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, X, Pencil, BookOpen, Check } from 'lucide-react';
 import { StarRating, ReadingProgressBar } from '@/components/ui/Charts';
+import { ReadingStatsPanel, StatsToggle, StatsDropdown } from '@/components/Statistics';
 
 const TAB_KEYS: ReadingTab[] = ['user1', 'user2'];
 const TAB_EMOJI: Record<ReadingTab, string> = { user1: '🐥', user2: '🐤' };
@@ -20,8 +21,10 @@ export default function ReadingList() {
   const [activeTab, setActiveTab] = useState<ReadingTab>('user1');
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showStats, setShowStats] = useState(false);
 
-  const items = (data.reading ?? []).filter((r) => r.tab === activeTab);
+  const allItems = data.reading ?? [];
+  const items = allItems.filter((r) => r.tab === activeTab);
   const editable = canEditTab(activeTab);
 
   const grouped: Record<ReadingStatus, ReadingItem[]> = {
@@ -35,25 +38,32 @@ export default function ReadingList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-amber-900">Reading List</h1>
-          <p className="text-sm text-amber-600/40">{partner ? 'books & reads for two' : 'your reading corner'}</p>
+          <h1 className="text-2xl font-bold text-slate-800">Reading List</h1>
+          <p className="text-sm text-blue-600/40">{partner ? 'books & reads for two' : 'your reading corner'}</p>
         </div>
-        {editable && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowAdd(true)}
-            className="duck-btn-soft flex items-center gap-1.5 text-xs px-3 py-2 rounded-full font-medium"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add book
-          </motion.button>
-        )}
+        <div className="flex items-center gap-2">
+          <StatsToggle open={showStats} onToggle={() => setShowStats(!showStats)} />
+          {editable && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAdd(true)}
+              className="duck-btn-soft flex items-center gap-1.5 text-xs px-3 py-2 rounded-full font-medium"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add book
+            </motion.button>
+          )}
+        </div>
       </div>
 
+      <StatsDropdown open={showStats}>
+        <ReadingStatsPanel items={allItems} ratings={data.ratings ?? {}} />
+      </StatsDropdown>
+
       {!editable && (
-        <div className="bg-amber-50 rounded-xl px-4 py-2 text-center border border-amber-200">
-          <p className="text-[10px] text-amber-600">👀 You&apos;re viewing — only they can edit this list</p>
+        <div className="bg-blue-50 rounded-xl px-4 py-2 text-center border border-blue-200">
+          <p className="text-[10px] text-blue-600">👀 You&apos;re viewing — only they can edit this list</p>
         </div>
       )}
 
@@ -66,8 +76,8 @@ export default function ReadingList() {
             className={cn(
               'flex-1 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5',
               activeTab === key
-                ? 'bg-white shadow-sm border border-amber-200 text-amber-800'
-                : 'bg-transparent text-amber-500/50 hover:bg-white/50'
+                ? 'bg-white shadow-sm border border-blue-200 text-slate-700'
+                : 'bg-transparent text-blue-500/50 hover:bg-white/50'
             )}
           >
             <span>{TAB_EMOJI[key]}</span> {getTabLabel(key)}
@@ -93,8 +103,8 @@ export default function ReadingList() {
           animate={{ opacity: 1 }}
           className="duck-card text-center py-12"
         >
-          <BookOpen className="w-10 h-10 text-amber-300 mx-auto mb-3" />
-          <p className="text-sm text-amber-700/60">No books yet — add your first read!</p>
+          <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-sm text-slate-600/60">No books yet — add your first read!</p>
         </motion.div>
       ) : (
         <div className="space-y-4">
@@ -106,8 +116,8 @@ export default function ReadingList() {
               <div key={status}>
                 <div className="flex items-center gap-2 mb-2 px-1">
                   <span className="text-sm">{cfg.emoji}</span>
-                  <h3 className="text-xs font-semibold text-amber-700/70 uppercase tracking-wide">{cfg.label}</h3>
-                  <span className="text-[10px] text-amber-400 ml-auto">{books.length}</span>
+                  <h3 className="text-xs font-semibold text-slate-600/70 uppercase tracking-wide">{cfg.label}</h3>
+                  <span className="text-[10px] text-slate-400 ml-auto">{books.length}</span>
                 </div>
                 <div className="space-y-2">
                   <AnimatePresence mode="popLayout">
@@ -173,8 +183,8 @@ function AddBookForm({
       className="duck-card space-y-3 overflow-hidden"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-amber-800">Add a book</h3>
-        <button type="button" onClick={onCancel} className="text-amber-400 hover:text-amber-600">
+        <h3 className="text-sm font-semibold text-slate-700">Add a book</h3>
+        <button type="button" onClick={onCancel} className="text-slate-400 hover:text-blue-600">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -209,7 +219,7 @@ function AddBookForm({
               onClick={() => setStatus(s)}
               className={cn(
                 'flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-all',
-                status === s ? cfg.color + ' ring-1 ring-current/20' : 'bg-white/50 text-amber-500/50'
+                status === s ? cfg.color + ' ring-1 ring-current/20' : 'bg-white/50 text-blue-500/50'
               )}
             >
               {cfg.emoji} {cfg.label}
@@ -287,7 +297,7 @@ function BookCard({
                 onClick={() => setStatus(s)}
                 className={cn(
                   'flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-all',
-                  status === s ? cfg.color + ' ring-1 ring-current/20' : 'bg-white/50 text-amber-500/50'
+                  status === s ? cfg.color + ' ring-1 ring-current/20' : 'bg-white/50 text-blue-500/50'
                 )}
               >
                 {cfg.emoji} {cfg.label}
@@ -324,20 +334,20 @@ function BookCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-            <h4 className="text-sm font-semibold text-amber-900 truncate">{book.title}</h4>
+            <h4 className="text-sm font-semibold text-slate-800 truncate">{book.title}</h4>
             <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap', cfg.color)}>
               {cfg.emoji} {cfg.label}
             </span>
           </div>
-          {book.author && <p className="text-xs text-amber-600/60">by {book.author}</p>}
-          {book.notes && <p className="text-xs text-amber-700/50 mt-1 line-clamp-2">{book.notes}</p>}
+          {book.author && <p className="text-xs text-blue-600/60">by {book.author}</p>}
+          {book.notes && <p className="text-xs text-slate-600/50 mt-1 line-clamp-2">{book.notes}</p>}
         </div>
         {editable && (
           <div className="flex gap-1 flex-shrink-0">
-            <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-400 hover:text-amber-600 transition-colors">
+            <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-blue-100 text-slate-400 hover:text-blue-600 transition-colors">
               <Pencil className="w-3.5 h-3.5" />
             </button>
-            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-amber-400 hover:text-red-500 transition-colors">
+            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -352,7 +362,7 @@ function BookCard({
       {/* Progress update input */}
       {isReading && editable && book.totalPages ? (
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-[10px] text-amber-600/60">Page:</span>
+          <span className="text-[10px] text-blue-600/60">Page:</span>
           <input
             type="number" min="0" max={book.totalPages}
             className="duck-input w-20 text-xs text-center py-1"
@@ -365,19 +375,19 @@ function BookCard({
             }}
             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
           />
-          <span className="text-[10px] text-amber-500/50">/ {book.totalPages}</span>
+          <span className="text-[10px] text-blue-500/50">/ {book.totalPages}</span>
         </div>
       ) : null}
 
       {/* Rating section for finished books */}
       {isFinished && (
-        <div className="mt-2 pt-2 border-t border-amber-100 space-y-1.5">
+        <div className="mt-2 pt-2 border-t border-blue-100 space-y-1.5">
           {editable ? (
             <>
               <StarRating value={myRating?.rating || 0} onChange={(r) => onRate(r, reviewText || undefined)} label="Your rating" />
               {myRating && myRating.rating > 0 && (
                 <button onClick={() => setShowReview(!showReview)}
-                  className="text-[10px] text-amber-500 hover:text-amber-700 transition-colors">
+                  className="text-[10px] text-blue-500 hover:text-slate-600 transition-colors">
                   {showReview ? 'Hide review' : (myRating.review ? 'Edit review' : '+ Add review')}
                 </button>
               )}
@@ -396,11 +406,11 @@ function BookCard({
           {partnerRating && partnerRating.rating > 0 && (
             <div className="mt-1">
               <StarRating value={partnerRating.rating} readonly size="sm" label="Partner" />
-              {partnerRating.review && <p className="text-[10px] text-amber-600/50 mt-0.5 italic">&quot;{partnerRating.review}&quot;</p>}
+              {partnerRating.review && <p className="text-[10px] text-blue-600/50 mt-0.5 italic">&quot;{partnerRating.review}&quot;</p>}
             </div>
           )}
           {myRating?.review && !showReview && editable && (
-            <p className="text-[10px] text-amber-600/50 italic">&quot;{myRating.review}&quot;</p>
+            <p className="text-[10px] text-blue-600/50 italic">&quot;{myRating.review}&quot;</p>
           )}
         </div>
       )}

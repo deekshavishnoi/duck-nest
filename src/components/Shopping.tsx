@@ -34,8 +34,8 @@ export default function Shopping() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-amber-900">Shopping</h1>
-          <p className="text-sm text-amber-600/40">{partner ? 'lists & groceries for two' : 'your shopping lists'}</p>
+          <h1 className="text-2xl font-bold text-slate-800">Shopping</h1>
+          <p className="text-sm text-blue-600/40">{partner ? 'lists & groceries for two' : 'your shopping lists'}</p>
         </div>
         {editable && (
           <motion.button
@@ -51,8 +51,8 @@ export default function Shopping() {
       </div>
 
       {!editable && (
-        <div className="bg-amber-50 rounded-xl px-4 py-2 text-center border border-amber-200">
-          <p className="text-[10px] text-amber-600">👀 You&apos;re viewing — only they can edit this list</p>
+        <div className="bg-blue-50 rounded-xl px-4 py-2 text-center border border-blue-200">
+          <p className="text-[10px] text-blue-600">👀 You&apos;re viewing — only they can edit this list</p>
         </div>
       )}
 
@@ -65,8 +65,8 @@ export default function Shopping() {
             className={cn(
               'flex-1 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5',
               activeTab === key
-                ? 'bg-white shadow-sm border border-amber-200 text-amber-800'
-                : 'bg-transparent text-amber-500/50 hover:bg-white/50'
+                ? 'bg-white shadow-sm border border-blue-200 text-slate-700'
+                : 'bg-transparent text-blue-500/50 hover:bg-white/50'
             )}
           >
             <span>{TAB_EMOJI[key]}</span> {getTabLabel(key)}
@@ -100,7 +100,7 @@ export default function Shopping() {
       {lists.length === 0 && (
         <div className="text-center py-12">
           <p className="text-4xl mb-2">🛒</p>
-          <p className="text-sm text-amber-600/40">No lists yet. Create one!</p>
+          <p className="text-sm text-blue-600/40">No lists yet. Create one!</p>
         </div>
       )}
 
@@ -185,7 +185,7 @@ function ShoppingListCard({
                     onClick={() => setEditCategory(c.key)}
                     className={cn(
                       'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
-                      editCategory === c.key ? 'bg-amber-200 text-amber-700' : 'bg-amber-50 text-amber-500'
+                      editCategory === c.key ? 'bg-blue-200 text-slate-600' : 'bg-blue-50 text-blue-500'
                     )}
                   >
                     {c.emoji} {c.label}
@@ -194,7 +194,7 @@ function ShoppingListCard({
               </div>
               <div className="flex gap-2">
                 <button onClick={handleSaveEdit} className="text-xs duck-btn px-3 py-1">Save</button>
-                <button onClick={onStopEdit} className="text-xs bg-amber-100 text-amber-500 px-3 py-1 rounded-lg">Cancel</button>
+                <button onClick={onStopEdit} className="text-xs bg-blue-100 text-blue-500 px-3 py-1 rounded-lg">Cancel</button>
               </div>
             </div>
           ) : (
@@ -202,18 +202,18 @@ function ShoppingListCard({
               <div className="flex items-center gap-2">
                 <span className="text-lg">{list.category === 'grocery' ? '🥑' : '🛍️'}</span>
                 <div>
-                  <h3 className="font-semibold text-sm text-amber-800">{list.title}</h3>
-                  <p className="text-[10px] text-amber-400">
+                  <h3 className="font-semibold text-sm text-slate-700">{list.title}</h3>
+                  <p className="text-[10px] text-slate-400">
                     {checkedCount}/{list.items.length} items done
                   </p>
                 </div>
               </div>
               {editable && (
                 <div className="flex gap-1">
-                  <button onClick={onStartEdit} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-blue-400 hover:bg-blue-50 transition-colors">
+                  <button onClick={onStartEdit} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-400 hover:bg-blue-50 transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={onDelete} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-red-400 hover:bg-red-50 transition-colors">
+                  <button onClick={onDelete} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -224,7 +224,7 @@ function ShoppingListCard({
 
         {/* Progress bar */}
         {list.items.length > 0 && !isEditing && (
-          <div className="w-full h-1 bg-amber-100 rounded-full mt-2 overflow-hidden">
+          <div className="w-full h-1 bg-blue-100 rounded-full mt-2 overflow-hidden">
             <motion.div
               className="h-full bg-green-300 rounded-full"
               initial={{ width: 0 }}
@@ -248,7 +248,7 @@ function ShoppingListCard({
                     'w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0',
                     item.checked
                       ? 'bg-green-100 border-green-300 text-green-500'
-                      : 'border-amber-200 hover:border-green-300',
+                      : 'border-blue-200 hover:border-green-300',
                     !editable && 'opacity-60 cursor-default'
                   )}
                 >
@@ -269,7 +269,7 @@ function ShoppingListCard({
                     onDoubleClick={() => { setEditingItemId(item.id); setEditText(item.name); }}
                     className={cn(
                       'flex-1 text-xs cursor-default transition-colors',
-                      item.checked ? 'text-amber-400 line-through' : 'text-amber-800'
+                      item.checked ? 'text-slate-400 line-through' : 'text-slate-700'
                     )}
                   >
                     {item.name}
@@ -279,7 +279,7 @@ function ShoppingListCard({
                 {editable && (
                   <button
                     onClick={() => onRemoveItem(item.id)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 text-amber-300 hover:text-red-400 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-300 hover:text-red-400 transition-all"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -300,7 +300,7 @@ function ShoppingListCard({
               />
               <button
                 onClick={handleAddItem}
-                className="text-xs bg-amber-100 text-amber-600 px-3 py-1.5 rounded-xl hover:bg-amber-200 transition-colors"
+                className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-200 transition-colors"
               >
                 Add
               </button>
@@ -346,8 +346,8 @@ function AddListModal({
         className="duck-card p-6 w-full max-w-md space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-amber-800">New Shopping List</h2>
-          <button type="button" onClick={onClose} className="text-amber-400 hover:text-amber-600">
+          <h2 className="font-semibold text-slate-700">New Shopping List</h2>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-blue-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -361,7 +361,7 @@ function AddListModal({
         />
 
         <div>
-          <p className="text-xs text-amber-500/50 mb-2">Category</p>
+          <p className="text-xs text-blue-500/50 mb-2">Category</p>
           <div className="flex gap-2">
             {CATEGORIES.map((c) => (
               <button
@@ -370,7 +370,7 @@ function AddListModal({
                 onClick={() => setCategory(c.key)}
                 className={cn(
                   'text-xs px-4 py-1.5 rounded-full font-medium transition-all flex items-center gap-1',
-                  category === c.key ? 'bg-amber-200 text-amber-700' : 'bg-amber-50 text-amber-500'
+                  category === c.key ? 'bg-blue-200 text-slate-600' : 'bg-blue-50 text-blue-500'
                 )}
               >
                 {c.emoji} {c.label}

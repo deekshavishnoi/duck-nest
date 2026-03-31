@@ -17,12 +17,12 @@ export const MOOD_CONFIG: Record<Mood, { emoji: string; label: string; color: st
   annoyed: { emoji: '😤', label: 'A bit annoyed', color: 'bg-orange-100 text-orange-700', low: true },
   'missing-you': { emoji: '🥺', label: 'Missing you', color: 'bg-blue-100 text-blue-700' },
   lazy: { emoji: '😴', label: 'Lazy mode', color: 'bg-purple-100 text-purple-700' },
-  'extra-loving': { emoji: '🥰', label: 'Extra loving', color: 'bg-amber-100 text-amber-700' },
+  'extra-loving': { emoji: '🥰', label: 'Extra loving', color: 'bg-rose-100 text-rose-700' },
   'having-a-moment': { emoji: '😭', label: 'Having a moment', color: 'bg-indigo-100 text-indigo-700', low: true },
   sad: { emoji: '😢', label: 'Feeling sad', color: 'bg-slate-100 text-slate-700', low: true },
   anxious: { emoji: '😰', label: 'Anxious', color: 'bg-teal-100 text-teal-700', low: true },
   grateful: { emoji: '🙏', label: 'Grateful', color: 'bg-emerald-100 text-emerald-700' },
-  excited: { emoji: '🤩', label: 'Excited', color: 'bg-amber-100 text-amber-700' },
+  excited: { emoji: '🤩', label: 'Excited', color: 'bg-orange-100 text-orange-700' },
 };
 
 // ----- Users & Auth -----
@@ -57,7 +57,7 @@ export interface PersonMoodEntry {
 export type DateCategory = 'cozy' | 'adventure' | 'low-energy' | 'special';
 
 export const DATE_CATEGORY_CONFIG: Record<DateCategory, { emoji: string; label: string; color: string }> = {
-  cozy: { emoji: '🛋️', label: 'Cozy', color: 'bg-amber-100 text-amber-700' },
+  cozy: { emoji: '🛋️', label: 'Cozy', color: 'bg-sky-100 text-sky-700' },
   adventure: { emoji: '🏔️', label: 'Adventure', color: 'bg-green-100 text-green-700' },
   'low-energy': { emoji: '☕', label: 'Low-energy', color: 'bg-stone-100 text-stone-700' },
   special: { emoji: '✨', label: 'Special', color: 'bg-violet-100 text-violet-700' },
@@ -126,7 +126,7 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export const DIFFICULTY_CONFIG: Record<Difficulty, { label: string; emoji: string; points: number; color: string }> = {
   easy: { label: 'Easy', emoji: '🌱', points: 0.5, color: 'bg-green-100 text-green-600' },
-  medium: { label: 'Medium', emoji: '⚡', points: 1, color: 'bg-amber-100 text-amber-600' },
+  medium: { label: 'Medium', emoji: '⚡', points: 1, color: 'bg-orange-100 text-orange-600' },
   hard: { label: 'Hard', emoji: '🔥', points: 2, color: 'bg-red-100 text-red-600' },
 };
 
@@ -176,7 +176,7 @@ export interface ItemRating {
 
 export const READING_STATUS_CONFIG: Record<ReadingStatus, { label: string; emoji: string; color: string }> = {
   'want-to-read': { label: 'Want to read', emoji: '📚', color: 'bg-blue-100 text-blue-700' },
-  reading: { label: 'Reading', emoji: '📖', color: 'bg-amber-100 text-amber-700' },
+  reading: { label: 'Reading', emoji: '📖', color: 'bg-sky-100 text-sky-700' },
   finished: { label: 'Finished', emoji: '✅', color: 'bg-green-100 text-green-700' },
 };
 
@@ -203,7 +203,7 @@ export const WATCH_TYPE_CONFIG: Record<WatchType, { label: string; emoji: string
 
 export const WATCH_STATUS_CONFIG: Record<WatchStatus, { label: string; emoji: string; color: string }> = {
   'want-to-watch': { label: 'Want to watch', emoji: '🍿', color: 'bg-purple-100 text-purple-700' },
-  watching: { label: 'Watching', emoji: '👀', color: 'bg-amber-100 text-amber-700' },
+  watching: { label: 'Watching', emoji: '👀', color: 'bg-sky-100 text-sky-700' },
   watched: { label: 'Watched', emoji: '✅', color: 'bg-green-100 text-green-700' },
 };
 

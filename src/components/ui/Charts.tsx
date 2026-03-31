@@ -24,7 +24,7 @@ export function StarRating({
 
   return (
     <div className="flex items-center gap-1.5">
-      {label && <span className="text-[10px] text-amber-600/60 font-medium mr-1">{label}</span>}
+      {label && <span className="text-[10px] text-blue-600/60 font-medium mr-1">{label}</span>}
       <div className="flex items-center gap-0.5" onMouseLeave={() => !readonly && setHover(null)}>
         {[1, 2, 3, 4, 5].map((star) => {
           const isFull = display >= star;
@@ -46,14 +46,14 @@ export function StarRating({
               }}
             >
               {/* Background (empty star) */}
-              <Star className={cn(starSize, 'text-amber-200')} />
+              <Star className={cn(starSize, 'text-blue-200')} />
               {/* Filled overlay */}
               {(isFull || isHalf) && (
                 <div
                   className="absolute inset-0 overflow-hidden"
                   style={{ width: isFull ? '100%' : '50%' }}
                 >
-                  <Star className={cn(starSize, 'text-amber-400 fill-amber-400')} />
+                  <Star className={cn(starSize, 'text-blue-500 fill-blue-400')} />
                 </div>
               )}
             </div>
@@ -61,7 +61,7 @@ export function StarRating({
         })}
       </div>
       {value > 0 && (
-        <span className="text-[10px] text-amber-500 font-medium ml-0.5">{value}</span>
+        <span className="text-[10px] text-blue-500 font-medium ml-0.5">{value}</span>
       )}
     </div>
   );
@@ -83,14 +83,14 @@ export function ReadingProgressBar({
   return (
     <div className={cn('w-full', compact ? 'mt-1' : 'mt-2')}>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] text-amber-600/60">
+        <span className="text-[10px] text-blue-600/60">
           {currentPage} / {totalPages} pages
         </span>
-        <span className="text-[10px] font-semibold text-amber-700">{pct}%</span>
+        <span className="text-[10px] font-semibold text-slate-600">{pct}%</span>
       </div>
-      <div className="w-full h-1.5 bg-amber-100 rounded-full overflow-hidden">
+      <div className="w-full h-1.5 bg-blue-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-amber-300 to-amber-500 rounded-full transition-all duration-500 ease-out"
+          className="h-full bg-gradient-to-r from-blue-300 to-blue-500 rounded-full transition-all duration-500 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -111,12 +111,12 @@ export function MiniBarChart({
     <div className="flex items-end gap-1.5 justify-center" style={{ height: maxHeight + 24 }}>
       {data.map((d, i) => (
         <div key={i} className="flex flex-col items-center gap-1" style={{ minWidth: 20 }}>
-          <span className="text-[9px] text-amber-600 font-medium">{d.value || ''}</span>
+          <span className="text-[9px] text-blue-600 font-medium">{d.value || ''}</span>
           <div
-            className={cn('w-5 rounded-t-sm transition-all', d.color || 'bg-amber-300')}
+            className={cn('w-5 rounded-t-sm transition-all', d.color || 'bg-blue-300')}
             style={{ height: Math.max(2, (d.value / max) * maxHeight) }}
           />
-          <span className="text-[8px] text-amber-500/60">{d.label}</span>
+          <span className="text-[8px] text-blue-500/60">{d.label}</span>
         </div>
       ))}
     </div>
@@ -166,12 +166,12 @@ export function DonutChart({
           );
         })}
       </svg>
-      {label && <span className="text-[10px] text-amber-600 font-medium">{label}</span>}
+      {label && <span className="text-[10px] text-blue-600 font-medium">{label}</span>}
       <div className="flex flex-wrap gap-2 justify-center">
         {segments.map((seg, i) => (
           <div key={i} className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: seg.color }} />
-            <span className="text-[9px] text-amber-600/70">{seg.label} ({seg.value})</span>
+            <span className="text-[9px] text-blue-600/70">{seg.label} ({seg.value})</span>
           </div>
         ))}
       </div>
@@ -184,8 +184,8 @@ export function StatCard({ label, value, emoji }: { label: string; value: string
   return (
     <div className="duck-card text-center py-3 flex-1 min-w-0">
       <div className="text-lg mb-0.5">{emoji}</div>
-      <div className="text-lg font-bold text-amber-800">{value}</div>
-      <div className="text-[10px] text-amber-600/60">{label}</div>
+      <div className="text-lg font-bold text-slate-700">{value}</div>
+      <div className="text-[10px] text-blue-600/60">{label}</div>
     </div>
   );
 }

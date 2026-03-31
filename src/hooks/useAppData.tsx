@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import {
   AppData, DateIdea, CoupleConfig,
@@ -11,7 +11,18 @@ import {
 } from '@/types';
 import { DEFAULT_APP_DATA, STARTER_DATES } from '@/lib/seed-data';
 import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  type User as FirebaseUser,
+} from '@/lib/firebase';
 
 // ----- Permission helpers -----
 type TabOwner = 'user1' | 'user2' | 'together';
@@ -28,15 +39,21 @@ interface AppContextType {
   data: AppData;
   isLoading: boolean;
   // Auth
+  firebaseUser: FirebaseUser | null;
   currentUser: UserProfile | null;
   partner: UserProfile | null;
   isLoggedIn: boolean;
   isOnboardingComplete: boolean;
-  signUp: (name: string, email: string, password: string) => { success: boolean; error?: string };
-  logIn: (email: string, password: string) => { success: boolean; error?: string };
-  logOut: () => void;
-  joinWithInvite: (code: string, name: string, email: string, password: string) => { success: boolean; error?: string };
+  signUp: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  logOut: () => Promise<void>;
+  joinWithInvite: (code: string, name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  joinWithInviteGoogle: (code: string) => Promise<{ success: boolean; error?: string }>;
   generateInviteCode: () => string;
+  resendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  emailVerified: boolean;
   // Display names
   myDisplayName: string;
   partnerDisplayName: string;
@@ -93,6 +110,37 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [rawData, setData, isLoaded] = useLocalStorage<AppData>('duckspace-data-v1', DEFAULT_APP_DATA);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Listen to Firebase auth state
+  useEffect(() => {
+    if (!auth) {
+      setAuthChecked(true);
+      return;
+    }
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setAuthChecked(true);
+      // Sync Firebase UID → localStorage currentUserId
+      if (user) {
+        setData((prev) => {
+          const existing = prev.users.find((u) => u.id === user.uid || u.email === user.email?.toLowerCase());
+          if (existing) {
+            // Update the profile id to Firebase UID if it differs (migration)
+            const updatedUsers = prev.users.map((u) =>
+              u.id === existing.id ? { ...u, id: user.uid, emailVerified: user.emailVerified } : u
+            );
+            return { ...prev, currentUserId: user.uid, users: updatedUsers };
+          }
+          return prev;
+        });
+      } else {
+        setData((prev) => ({ ...prev, currentUserId: null }));
+      }
+    });
+    return () => unsub();
+  }, [setData]);
 
   // Merge with defaults so newly added fields are always present
   const data: AppData = useMemo(() => ({ ...DEFAULT_APP_DATA, ...rawData }), [rawData]);
@@ -107,9 +155,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [data.users, data.currentUserId]
   );
 
-  const isLoggedIn = !!currentUser;
+  const isLoggedIn = !!currentUser && !!firebaseUser;
+  const emailVerified = firebaseUser?.emailVerified ?? false;
   const isOnboardingComplete = data.onboardingComplete;
-  const isLoading = !isLoaded;
+  const isLoading = !isLoaded || !authChecked;
   const myRole = currentUser?.role ?? null;
 
   // ----- Display name resolution -----
@@ -129,79 +178,128 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const partnerDisplayName = partner ? getDisplayName(partner.id) : '';
 
   // ----- Auth -----
-  const logIn = (email: string, password: string) => {
-    const trimEmail = email.trim().toLowerCase();
-    const user = data.users.find((u) => u.email === trimEmail);
-    if (!user) return { success: false, error: 'No account found with this email' };
-    const passwords = JSON.parse(localStorage.getItem('duckspace-passwords') || '{}');
-    const stored = passwords[user.id];
-    if (!stored) return { success: false, error: 'Incorrect password' };
-    // Support both legacy plain-text and new bcrypt hashes
-    const isHash = typeof stored === 'string' && stored.startsWith('$2');
-    const match = isHash ? bcrypt.compareSync(password, stored) : stored === password;
-    if (!match) return { success: false, error: 'Incorrect password' };
-    // Migrate legacy plain-text password to hash on successful login
-    if (!isHash) {
-      passwords[user.id] = bcrypt.hashSync(password, 10);
-      localStorage.setItem('duckspace-passwords', JSON.stringify(passwords));
+  const firebaseErrorMessage = (code: string): string => {
+    switch (code) {
+      case 'auth/email-already-in-use': return 'This email is already registered';
+      case 'auth/invalid-email': return 'Invalid email address';
+      case 'auth/weak-password': return 'Password must be at least 6 characters';
+      case 'auth/user-not-found': return 'No account found with this email';
+      case 'auth/wrong-password': return 'Incorrect password';
+      case 'auth/invalid-credential': return 'Invalid email or password';
+      case 'auth/too-many-requests': return 'Too many attempts. Please try again later';
+      case 'auth/popup-closed-by-user': return 'Sign-in was cancelled';
+      case 'auth/account-exists-with-different-credential': return 'An account already exists with this email';
+      default: return 'Something went wrong. Please try again';
     }
-    setData((prev) => ({ ...prev, currentUserId: user.id }));
-    return { success: true };
   };
 
-  const logOut = () => {
+  const logIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase not configured' };
+    const trimEmail = email.trim().toLowerCase();
+    try {
+      const cred = await signInWithEmailAndPassword(auth, trimEmail, password);
+      // Ensure local profile exists
+      const existing = data.users.find((u) => u.id === cred.user.uid || u.email === trimEmail);
+      if (existing) {
+        setData((prev) => ({ ...prev, currentUserId: cred.user.uid }));
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      return { success: false, error: firebaseErrorMessage(code) };
+    }
+  };
+
+  const logInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase not configured' };
+    try {
+      const cred = await signInWithPopup(auth, googleProvider);
+      const gEmail = cred.user.email?.toLowerCase() ?? '';
+      const gName = cred.user.displayName ?? 'User';
+      // Check if a profile already exists
+      const existing = data.users.find((u) => u.id === cred.user.uid || u.email === gEmail);
+      if (existing) {
+        setData((prev) => ({
+          ...prev,
+          currentUserId: cred.user.uid,
+          users: prev.users.map((u) =>
+            u.id === existing.id ? { ...u, id: cred.user.uid, emailVerified: true } : u
+          ),
+        }));
+        return { success: true };
+      }
+      // No profile yet — create one (primary user)
+      if (data.users.length >= 2) {
+        await firebaseSignOut(auth);
+        return { success: false, error: 'This space already has two members' };
+      }
+      const user: UserProfile = {
+        id: cred.user.uid,
+        name: gName,
+        email: gEmail,
+        emailVerified: true,
+        avatarUrl: cred.user.photoURL ?? undefined,
+        role: data.users.length === 0 ? 'primary' : 'partner',
+        joinedAt: new Date().toISOString(),
+      };
+      setData((prev) => ({
+        ...prev,
+        currentUserId: cred.user.uid,
+        users: [...prev.users, user],
+        couple: { ...prev.couple, person1: gName },
+      }));
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      return { success: false, error: firebaseErrorMessage(code) };
+    }
+  };
+
+  const logOut = async () => {
+    if (auth) await firebaseSignOut(auth);
     setData((prev) => ({ ...prev, currentUserId: null }));
   };
 
-  const signUpInternal = (name: string, email: string, password: string): { success: boolean; error?: string; userId?: string } => {
+  const signUp = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase not configured' };
     const trimEmail = email.trim().toLowerCase();
     const trimName = name.trim();
     if (!trimName) return { success: false, error: 'Name is required' };
     if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) return { success: false, error: 'Valid email is required' };
     if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters' };
+    if (data.users.some((u) => u.email === trimEmail)) return { success: false, error: 'This email is already registered' };
+    if (data.users.length >= 2) return { success: false, error: 'This space already has two members' };
 
-    // Check all duckspace password stores for duplicate emails
-    const existingUsers = data.users;
-    if (existingUsers.some((u) => u.email === trimEmail)) {
-      return { success: false, error: 'This email is already registered' };
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, trimEmail, password);
+      // Send verification email
+      await sendEmailVerification(cred.user);
+
+      const user: UserProfile = {
+        id: cred.user.uid,
+        name: trimName,
+        email: trimEmail,
+        emailVerified: false,
+        role: 'primary',
+        joinedAt: new Date().toISOString(),
+      };
+
+      setData((prev) => ({
+        ...prev,
+        currentUserId: cred.user.uid,
+        users: [user],
+        couple: { ...prev.couple, person1: trimName },
+      }));
+
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      return { success: false, error: firebaseErrorMessage(code) };
     }
-    if (existingUsers.length >= 2) {
-      return { success: false, error: 'This space already has two members' };
-    }
-
-    const userId = uuidv4();
-    // Hash password with bcrypt before storing
-    const hash = bcrypt.hashSync(password, 10);
-    const passwords = JSON.parse(localStorage.getItem('duckspace-passwords') || '{}');
-    passwords[userId] = hash;
-    localStorage.setItem('duckspace-passwords', JSON.stringify(passwords));
-
-    return { success: true, userId };
   };
 
-  const signUpWrapped = (name: string, email: string, password: string) => {
-    const result = signUpInternal(name, email, password);
-    if (!result.success || !result.userId) return { success: result.success, error: result.error };
-
-    const user: UserProfile = {
-      id: result.userId,
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      role: 'primary',
-      joinedAt: new Date().toISOString(),
-    };
-
-    setData((prev) => ({
-      ...prev,
-      currentUserId: result.userId!,
-      users: [user],
-      couple: { ...prev.couple, person1: name.trim() },
-    }));
-
-    return { success: true };
-  };
-
-  const joinWithInvite = (code: string, name: string, email: string, password: string) => {
+  const joinWithInvite = async (code: string, name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase not configured' };
     if (!data.invite.code || data.invite.code !== code.trim().toUpperCase()) {
       return { success: false, error: 'Invalid invite code' };
     }
@@ -212,43 +310,135 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'This space already has two members' };
     }
 
-    const result = signUpInternal(name, email, password);
-    if (!result.success || !result.userId) return { success: result.success, error: result.error };
+    const trimEmail = email.trim().toLowerCase();
+    const trimName = name.trim();
+    if (!trimName) return { success: false, error: 'Name is required' };
+    if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) return { success: false, error: 'Valid email is required' };
+    if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters' };
+    if (data.users.some((u) => u.email === trimEmail)) return { success: false, error: 'This email is already registered' };
 
-    const user: UserProfile = {
-      id: result.userId,
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      role: 'partner',
-      joinedAt: new Date().toISOString(),
-    };
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, trimEmail, password);
+      await sendEmailVerification(cred.user);
 
-    // Add starter dates when partner joins
-    const now = new Date().toISOString();
-    const starterDates = STARTER_DATES.map((d) => ({
-      ...d,
-      id: uuidv4(),
-      done: false,
-      createdAt: now,
-    }));
+      const user: UserProfile = {
+        id: cred.user.uid,
+        name: trimName,
+        email: trimEmail,
+        emailVerified: false,
+        role: 'partner',
+        joinedAt: new Date().toISOString(),
+      };
 
-    setData((prev) => ({
-      ...prev,
-      currentUserId: result.userId!,
-      users: [...prev.users, user],
-      onboardingComplete: true,
-      couple: { ...prev.couple, person2: name.trim() },
-      invite: { ...prev.invite, partnerJoined: true },
-      dates: [...prev.dates, ...starterDates],
-    }));
+      const now = new Date().toISOString();
+      const starterDates = STARTER_DATES.map((d) => ({
+        ...d,
+        id: uuidv4(),
+        done: false,
+        createdAt: now,
+      }));
 
-    return { success: true };
+      setData((prev) => ({
+        ...prev,
+        currentUserId: cred.user.uid,
+        users: [...prev.users, user],
+        onboardingComplete: true,
+        couple: { ...prev.couple, person2: trimName },
+        invite: { ...prev.invite, partnerJoined: true },
+        dates: [...prev.dates, ...starterDates],
+      }));
+
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      return { success: false, error: firebaseErrorMessage(code) };
+    }
+  };
+
+  const joinWithInviteGoogle = async (code: string): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase not configured' };
+    if (!data.invite.code || data.invite.code !== code.trim().toUpperCase()) {
+      return { success: false, error: 'Invalid invite code' };
+    }
+    if (data.invite.partnerJoined) {
+      return { success: false, error: 'A partner has already joined this space' };
+    }
+    if (data.users.length >= 2) {
+      return { success: false, error: 'This space already has two members' };
+    }
+
+    try {
+      const cred = await signInWithPopup(auth, googleProvider);
+      const gEmail = cred.user.email?.toLowerCase() ?? '';
+      const gName = cred.user.displayName ?? 'Partner';
+
+      if (data.users.some((u) => u.email === gEmail)) {
+        return { success: false, error: 'This email is already registered' };
+      }
+
+      const user: UserProfile = {
+        id: cred.user.uid,
+        name: gName,
+        email: gEmail,
+        emailVerified: true,
+        avatarUrl: cred.user.photoURL ?? undefined,
+        role: 'partner',
+        joinedAt: new Date().toISOString(),
+      };
+
+      const now = new Date().toISOString();
+      const starterDates = STARTER_DATES.map((d) => ({
+        ...d,
+        id: uuidv4(),
+        done: false,
+        createdAt: now,
+      }));
+
+      setData((prev) => ({
+        ...prev,
+        currentUserId: cred.user.uid,
+        users: [...prev.users, user],
+        onboardingComplete: true,
+        couple: { ...prev.couple, person2: gName },
+        invite: { ...prev.invite, partnerJoined: true },
+        dates: [...prev.dates, ...starterDates],
+      }));
+
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      return { success: false, error: firebaseErrorMessage(code) };
+    }
   };
 
   const generateInviteCode = () => {
     const code = uuidv4().slice(0, 8).toUpperCase();
     setData((prev) => ({ ...prev, invite: { ...prev.invite, code } }));
     return code;
+  };
+
+  const resendVerificationEmail = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!firebaseUser) return { success: false, error: 'Not logged in' };
+    if (firebaseUser.emailVerified) return { success: false, error: 'Email is already verified' };
+    try {
+      await sendEmailVerification(firebaseUser);
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to send verification email. Try again in a minute.' };
+    }
+  };
+
+  const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase not configured' };
+    const trimEmail = email.trim().toLowerCase();
+    if (!trimEmail) return { success: false, error: 'Please enter your email' };
+    try {
+      await sendPasswordResetEmail(auth, trimEmail);
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      return { success: false, error: firebaseErrorMessage(code) };
+    }
   };
 
   // ----- Permissions -----
@@ -643,15 +833,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         data,
         isLoading,
+        firebaseUser,
         currentUser,
         partner,
         isLoggedIn,
         isOnboardingComplete,
-        signUp: signUpWrapped,
+        signUp,
         logIn,
+        logInWithGoogle,
         logOut,
         joinWithInvite,
+        joinWithInviteGoogle,
         generateInviteCode,
+        resendVerificationEmail,
+        resetPassword,
+        emailVerified,
         myDisplayName,
         partnerDisplayName,
         getDisplayName,

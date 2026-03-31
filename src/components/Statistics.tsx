@@ -1,191 +1,182 @@
 'use client';
 
 import { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { useApp } from '@/hooks/useAppData';
-import { StatCard, MiniBarChart, DonutChart, StarRating } from '@/components/ui/Charts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ReadingItem, WatchItem, ItemRating } from '@/types';
+import { MiniBarChart, StarRating } from '@/components/ui/Charts';
 
-export default function Statistics() {
-  const { data, partner } = useApp();
-
-  const readingStats = useMemo(() => {
-    const items = data.reading ?? [];
+/* ---- Reading Stats Panel ---- */
+export function ReadingStatsPanel({ items, ratings }: {
+  items: ReadingItem[];
+  ratings: Record<string, ItemRating>;
+}) {
+  const stats = useMemo(() => {
     const finished = items.filter((b) => b.status === 'finished');
     const reading = items.filter((b) => b.status === 'reading');
-    const wantToRead = items.filter((b) => b.status === 'want-to-read');
     const totalPagesRead = finished.reduce((sum, b) => sum + (b.totalPages || 0), 0)
       + reading.reduce((sum, b) => sum + (b.currentPage || 0), 0);
 
-    return { total: items.length, finished: finished.length, reading: reading.length, wantToRead: wantToRead.length, totalPagesRead };
-  }, [data.reading]);
+    // Reading ratings
+    const bookRatings = Object.entries(ratings)
+      .filter(([key]) => items.some((b) => key.startsWith(b.id + ':')))
+      .map(([, r]) => r);
+    const avgRating = bookRatings.length > 0
+      ? bookRatings.reduce((sum, r) => sum + r.rating, 0) / bookRatings.length : 0;
 
-  const watchStats = useMemo(() => {
-    const items = data.watchList ?? [];
-    const watched = items.filter((w) => w.status === 'watched');
-    const watching = items.filter((w) => w.status === 'watching');
-    const wantToWatch = items.filter((w) => w.status === 'want-to-watch');
-    const movies = items.filter((w) => w.type === 'movie').length;
-    const series = items.filter((w) => w.type === 'series').length;
-    const docs = items.filter((w) => w.type === 'documentary').length;
+    // Pages per day (rough estimate from finished books)
+    let pagesPerDay = 0;
+    const booksWithDates = finished.filter((b) => b.startedAt && b.finishedAt && b.totalPages);
+    if (booksWithDates.length > 0) {
+      const totalDays = booksWithDates.reduce((sum, b) => {
+        const start = new Date(b.startedAt!).getTime();
+        const end = new Date(b.finishedAt!).getTime();
+        const days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+        return sum + days;
+      }, 0);
+      const totalPgs = booksWithDates.reduce((sum, b) => sum + (b.totalPages || 0), 0);
+      pagesPerDay = Math.round(totalPgs / totalDays);
+    }
 
-    return { total: items.length, watched: watched.length, watching: watching.length, wantToWatch: wantToWatch.length, movies, series, docs };
-  }, [data.watchList]);
+    return { total: items.length, finished: finished.length, reading: reading.length, totalPagesRead, avgRating, ratingCount: bookRatings.length, pagesPerDay };
+  }, [items, ratings]);
 
-  const ratingStats = useMemo(() => {
-    const ratings = data.ratings ?? {};
-    const entries = Object.values(ratings);
-    if (entries.length === 0) return { count: 0, avg: 0, distribution: [] as { label: string; value: number }[] };
-    const avg = entries.reduce((sum, r) => sum + r.rating, 0) / entries.length;
-    const distribution = [1, 2, 3, 4, 5].map((star) => ({
-      label: `${star}★`,
-      value: entries.filter((r) => Math.round(r.rating) === star).length,
-    }));
-    return { count: entries.length, avg, distribution };
-  }, [data.ratings]);
-
-  const choreStats = useMemo(() => {
-    const chores = data.chores ?? [];
-    const completed = chores.filter((c) => c.completed).length;
-    const total = chores.length;
-    return { total, completed, pending: total - completed };
-  }, [data.chores]);
-
-  const dateStats = useMemo(() => {
-    const dates = data.dates ?? [];
-    const completed = dates.filter((d) => d.done).length;
-    return { total: dates.length, completed, planned: dates.length - completed };
-  }, [data.dates]);
-
-  const isEmpty = readingStats.total === 0 && watchStats.total === 0 && choreStats.total === 0 && dateStats.total === 0;
+  if (stats.total === 0) return null;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-amber-900">Statistics</h1>
-        <p className="text-sm text-amber-600/40">{partner ? 'a gentle look at what you\'ve shared' : 'your cozy journey so far'}</p>
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="bg-blue-50 rounded-xl py-2 px-1">
+          <p className="text-lg font-bold text-blue-700">{stats.finished}</p>
+          <p className="text-[9px] text-slate-500">Finished</p>
+        </div>
+        <div className="bg-sky-50 rounded-xl py-2 px-1">
+          <p className="text-lg font-bold text-sky-700">{stats.reading}</p>
+          <p className="text-[9px] text-slate-500">Reading</p>
+        </div>
+        <div className="bg-indigo-50 rounded-xl py-2 px-1">
+          <p className="text-lg font-bold text-indigo-700">{stats.total}</p>
+          <p className="text-[9px] text-slate-500">Total</p>
+        </div>
       </div>
-
-      {isEmpty ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="duck-card text-center py-12">
-          <p className="text-3xl mb-3">📊</p>
-          <p className="text-sm text-amber-700/60">No data yet — start adding books, movies, dates, and chores!</p>
-        </motion.div>
-      ) : (
-        <>
-          {/* Overview cards */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-2 gap-3">
-            <StatCard emoji="📚" value={readingStats.total} label="Books" />
-            <StatCard emoji="🎬" value={watchStats.total} label="Watch items" />
-            <StatCard emoji="📅" value={dateStats.completed} label="Dates done" />
-            <StatCard emoji="✅" value={choreStats.completed} label="Chores done" />
-          </motion.div>
-
-          {/* Reading breakdown */}
-          {readingStats.total > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="duck-card space-y-3">
-              <h3 className="text-sm font-semibold text-amber-800 flex items-center gap-2">📖 Reading</h3>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-blue-50 rounded-xl py-2">
-                  <p className="text-lg font-bold text-blue-700">{readingStats.wantToRead}</p>
-                  <p className="text-[9px] text-blue-500">Want to read</p>
-                </div>
-                <div className="bg-amber-50 rounded-xl py-2">
-                  <p className="text-lg font-bold text-amber-700">{readingStats.reading}</p>
-                  <p className="text-[9px] text-amber-500">Reading</p>
-                </div>
-                <div className="bg-green-50 rounded-xl py-2">
-                  <p className="text-lg font-bold text-green-700">{readingStats.finished}</p>
-                  <p className="text-[9px] text-green-500">Finished</p>
-                </div>
-              </div>
-              {readingStats.totalPagesRead > 0 && (
-                <p className="text-xs text-amber-600/60 text-center">
-                  📄 {readingStats.totalPagesRead.toLocaleString()} pages read so far
-                </p>
-              )}
-            </motion.div>
-          )}
-
-          {/* Watch breakdown */}
-          {watchStats.total > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              className="duck-card space-y-3">
-              <h3 className="text-sm font-semibold text-amber-800 flex items-center gap-2">🍿 Watch List</h3>
-              <DonutChart
-                segments={[
-                  { label: 'Movies', value: watchStats.movies, color: '#f59e0b' },
-                  { label: 'Series', value: watchStats.series, color: '#8b5cf6' },
-                  { label: 'Docs', value: watchStats.docs, color: '#10b981' },
-                ].filter((s) => s.value > 0)}
-                label={`${watchStats.total} total`}
-              />
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-purple-50 rounded-xl py-2">
-                  <p className="text-lg font-bold text-purple-700">{watchStats.wantToWatch}</p>
-                  <p className="text-[9px] text-purple-500">Queued</p>
-                </div>
-                <div className="bg-amber-50 rounded-xl py-2">
-                  <p className="text-lg font-bold text-amber-700">{watchStats.watching}</p>
-                  <p className="text-[9px] text-amber-500">Watching</p>
-                </div>
-                <div className="bg-green-50 rounded-xl py-2">
-                  <p className="text-lg font-bold text-green-700">{watchStats.watched}</p>
-                  <p className="text-[9px] text-green-500">Watched</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Ratings */}
-          {ratingStats.count > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="duck-card space-y-3">
-              <h3 className="text-sm font-semibold text-amber-800 flex items-center gap-2">⭐ Ratings</h3>
-              <div className="flex items-center gap-3">
-                <div className="text-center mr-2">
-                  <p className="text-2xl font-bold text-amber-800">{ratingStats.avg.toFixed(1)}</p>
-                  <StarRating value={ratingStats.avg} readonly size="sm" />
-                  <p className="text-[9px] text-amber-500 mt-0.5">{ratingStats.count} ratings</p>
-                </div>
-                <div className="flex-1">
-                  <MiniBarChart data={ratingStats.distribution} />
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Dates & Chores */}
-          {(dateStats.total > 0 || choreStats.total > 0) && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-              className="grid grid-cols-2 gap-3">
-              {dateStats.total > 0 && (
-                <div className="duck-card text-center">
-                  <p className="text-sm mb-1">📅</p>
-                  <p className="text-lg font-bold text-amber-800">{dateStats.completed}/{dateStats.total}</p>
-                  <p className="text-[9px] text-amber-600/60">dates completed</p>
-                  <div className="mt-2 h-1.5 bg-amber-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all"
-                      style={{ width: `${dateStats.total > 0 ? (dateStats.completed / dateStats.total) * 100 : 0}%` }} />
-                  </div>
-                </div>
-              )}
-              {choreStats.total > 0 && (
-                <div className="duck-card text-center">
-                  <p className="text-sm mb-1">🧹</p>
-                  <p className="text-lg font-bold text-amber-800">{choreStats.completed}/{choreStats.total}</p>
-                  <p className="text-[9px] text-amber-600/60">chores done</p>
-                  <div className="mt-2 h-1.5 bg-amber-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all"
-                      style={{ width: `${choreStats.total > 0 ? (choreStats.completed / choreStats.total) * 100 : 0}%` }} />
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </>
+      {stats.totalPagesRead > 0 && (
+        <p className="text-xs text-slate-500 text-center">
+          📄 {stats.totalPagesRead.toLocaleString()} pages read
+          {stats.pagesPerDay > 0 && ` · ~${stats.pagesPerDay} pages/day`}
+        </p>
+      )}
+      {stats.ratingCount > 0 && (
+        <div className="flex items-center justify-center gap-2">
+          <StarRating value={stats.avgRating} readonly size="sm" />
+          <span className="text-[10px] text-slate-400">avg ({stats.ratingCount})</span>
+        </div>
       )}
     </div>
+  );
+}
+
+/* ---- Watch Stats Panel ---- */
+export function WatchStatsPanel({ items, ratings }: {
+  items: WatchItem[];
+  ratings: Record<string, ItemRating>;
+}) {
+  const stats = useMemo(() => {
+    const watched = items.filter((w) => w.status === 'watched');
+    const movies = watched.filter((w) => w.type === 'movie').length;
+    const series = watched.filter((w) => w.type === 'series').length;
+    const docs = watched.filter((w) => w.type === 'documentary').length;
+
+    // Time-based stats
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const watchedLastWeek = watched.filter((w) => w.watchedAt && new Date(w.watchedAt) >= oneWeekAgo).length;
+    const watchedLastMonth = watched.filter((w) => w.watchedAt && new Date(w.watchedAt) >= oneMonthAgo).length;
+
+    // Ratings
+    const watchRatings = Object.entries(ratings)
+      .filter(([key]) => items.some((w) => key.startsWith(w.id + ':')))
+      .map(([, r]) => r);
+    const avgRating = watchRatings.length > 0
+      ? watchRatings.reduce((sum, r) => sum + r.rating, 0) / watchRatings.length : 0;
+
+    const distribution = [1, 2, 3, 4, 5].map((star) => ({
+      label: `${star}★`,
+      value: watchRatings.filter((r) => Math.round(r.rating) === star).length,
+    }));
+
+    return { total: items.length, watched: watched.length, movies, series, docs, watchedLastWeek, watchedLastMonth, avgRating, ratingCount: watchRatings.length, distribution };
+  }, [items, ratings]);
+
+  if (stats.total === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="bg-emerald-50 rounded-xl py-2 px-1">
+          <p className="text-lg font-bold text-emerald-700">{stats.watched}</p>
+          <p className="text-[9px] text-slate-500">Watched</p>
+        </div>
+        <div className="bg-blue-50 rounded-xl py-2 px-1">
+          <p className="text-lg font-bold text-blue-700">{stats.total}</p>
+          <p className="text-[9px] text-slate-500">Total</p>
+        </div>
+        <div className="bg-violet-50 rounded-xl py-2 px-1">
+          <p className="text-lg font-bold text-violet-700">
+            {stats.movies}/{stats.series}/{stats.docs}
+          </p>
+          <p className="text-[9px] text-slate-500">🎬/📺/🎞️</p>
+        </div>
+      </div>
+      {(stats.watchedLastWeek > 0 || stats.watchedLastMonth > 0) && (
+        <p className="text-xs text-slate-500 text-center">
+          {stats.watchedLastWeek > 0 && `${stats.watchedLastWeek} this week`}
+          {stats.watchedLastWeek > 0 && stats.watchedLastMonth > 0 && ' · '}
+          {stats.watchedLastMonth > 0 && `${stats.watchedLastMonth} this month`}
+        </p>
+      )}
+      {stats.ratingCount > 0 && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-center gap-2">
+            <StarRating value={stats.avgRating} readonly size="sm" />
+            <span className="text-[10px] text-slate-400">avg ({stats.ratingCount})</span>
+          </div>
+          {stats.distribution.some((d) => d.value > 0) && (
+            <MiniBarChart data={stats.distribution} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---- Stats Toggle Button ---- */
+export function StatsToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="text-[10px] px-2.5 py-1 rounded-full font-medium transition-all bg-blue-50 text-blue-600 hover:bg-blue-100"
+    >
+      {open ? 'Hide stats' : '📊 Stats'}
+    </button>
+  );
+}
+
+/* ---- Stats Wrapper with animation ---- */
+export function StatsDropdown({ open, children }: { open: boolean; children: React.ReactNode }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="overflow-hidden"
+        >
+          <div className="duck-card space-y-2">
+            {children}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

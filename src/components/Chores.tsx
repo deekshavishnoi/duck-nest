@@ -38,21 +38,21 @@ export default function Chores() {
       {isOwnTab && (
         <div className="duck-card p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-amber-600/50">
+            <p className="text-xs text-blue-600/50">
               {activeTab === 'together' ? 'How well we\'re handling life together' : 'Your personal progress'}
             </p>
             <span className="text-lg">{activeTab === 'together' ? '🦆' : '✨'}</span>
           </div>
-          <div className="w-full h-2 bg-amber-100 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-700"
+              className="h-full rounded-full bg-gradient-to-r from-blue-300 to-blue-500 transition-all duration-700"
               style={{ width: `${Math.min(scoreValue, 100)}%` }}
             />
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-[10px] text-amber-400">{scoreValue.toFixed(0)} pts</span>
+            <span className="text-[10px] text-slate-400">{scoreValue.toFixed(0)} pts</span>
             {scoreValue >= 100 && (
-              <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+              <span className="text-[10px] text-blue-600 font-medium flex items-center gap-0.5">
                 <Heart className="w-3 h-3" fill="currentColor" /> Amazing teamwork!
               </span>
             )}
@@ -63,8 +63,8 @@ export default function Chores() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-amber-900">Chores</h1>
-          <p className="text-sm text-amber-600/40">{partner ? 'teamwork makes the dream work' : 'your task tracker'}</p>
+          <h1 className="text-2xl font-bold text-slate-800">Chores</h1>
+          <p className="text-sm text-blue-600/40">{partner ? 'teamwork makes the dream work' : 'your task tracker'}</p>
         </div>
         {editable && (
           <motion.button
@@ -80,8 +80,8 @@ export default function Chores() {
       </div>
 
       {!editable && (
-        <div className="bg-amber-50 rounded-xl px-4 py-2 text-center border border-amber-200">
-          <p className="text-[10px] text-amber-600">👀 You&apos;re viewing — only they can edit their chores</p>
+        <div className="bg-blue-50 rounded-xl px-4 py-2 text-center border border-blue-200">
+          <p className="text-[10px] text-blue-600">👀 You&apos;re viewing — only they can edit their chores</p>
         </div>
       )}
 
@@ -94,8 +94,8 @@ export default function Chores() {
             className={cn(
               'flex-1 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5',
               activeTab === key
-                ? 'bg-white shadow-sm border border-amber-200 text-amber-800'
-                : 'bg-transparent text-amber-500/50 hover:bg-white/50'
+                ? 'bg-white shadow-sm border border-blue-200 text-slate-700'
+                : 'bg-transparent text-blue-500/50 hover:bg-white/50'
             )}
           >
             <span>{TAB_EMOJI[key]}</span> {getTabLabel(key)}
@@ -123,7 +123,7 @@ export default function Chores() {
       {active.length === 0 && done.length === 0 && (
         <div className="text-center py-12">
           <p className="text-4xl mb-2">✨</p>
-          <p className="text-sm text-amber-600/40">No chores yet. Add one!</p>
+          <p className="text-sm text-blue-600/40">No chores yet. Add one!</p>
         </div>
       )}
 
@@ -184,14 +184,14 @@ function ChoreCard({
               onClick={() => editable && onToggleComplete()}
               disabled={!editable}
               className={cn(
-                'mt-0.5 w-5 h-5 rounded-md border-2 border-amber-200 hover:border-green-300 flex items-center justify-center transition-all flex-shrink-0',
+                'mt-0.5 w-5 h-5 rounded-md border-2 border-blue-200 hover:border-green-300 flex items-center justify-center transition-all flex-shrink-0',
                 !editable && 'opacity-60 cursor-default'
               )}
             >
               {chore.completed && <Check className="w-3 h-3 text-green-500" />}
             </button>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-amber-800">{chore.title}</h3>
+              <h3 className="font-semibold text-sm text-slate-700">{chore.title}</h3>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', diff.color)}>
                   {diff.emoji} {diff.label} ({diff.points}pt)
@@ -199,7 +199,7 @@ function ChoreCard({
                 {chore.deadline && (
                   <span className={cn(
                     'text-[10px] flex items-center gap-1',
-                    isOverdue ? 'text-red-400' : 'text-amber-400'
+                    isOverdue ? 'text-red-400' : 'text-slate-400'
                   )}>
                     <Calendar className="w-3 h-3" />
                     {new Date(chore.deadline).toLocaleDateString('en-DE', { day: 'numeric', month: 'short' })}
@@ -207,19 +207,19 @@ function ChoreCard({
                   </span>
                 )}
                 {chore.subtasks.length > 0 && (
-                  <span className="text-[10px] text-amber-400">{subDone}/{chore.subtasks.length} sub-tasks</span>
+                  <span className="text-[10px] text-slate-400">{subDone}/{chore.subtasks.length} sub-tasks</span>
                 )}
               </div>
             </div>
           </div>
           <div className="flex gap-1 items-center">
             {chore.subtasks.length > 0 && (
-              <button onClick={() => setExpanded(!expanded)} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-amber-600 transition-colors">
+              <button onClick={() => setExpanded(!expanded)} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-600 transition-colors">
                 {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
             )}
             {editable && (
-              <button onClick={onDelete} className="p-1.5 rounded-lg bg-amber-50 text-amber-300 hover:text-red-400 hover:bg-red-50 transition-colors">
+              <button onClick={onDelete} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
@@ -228,9 +228,9 @@ function ChoreCard({
 
         {/* Sub-tasks progress */}
         {chore.subtasks.length > 0 && (
-          <div className="w-full h-1 bg-amber-100 rounded-full mt-3 overflow-hidden">
+          <div className="w-full h-1 bg-blue-100 rounded-full mt-3 overflow-hidden">
             <motion.div
-              className="h-full bg-amber-400 rounded-full"
+              className="h-full bg-blue-400 rounded-full"
               animate={{ width: `${(subDone / chore.subtasks.length) * 100}%` }}
               transition={{ duration: 0.5 }}
             />
@@ -247,7 +247,7 @@ function ChoreCard({
             exit={{ height: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-1 border-t border-amber-100 pt-3">
+            <div className="px-4 pb-4 space-y-1 border-t border-blue-100 pt-3">
               {chore.subtasks.map((sub) => (
                 <div key={sub.id} className="flex items-center gap-2">
                   <button
@@ -256,8 +256,8 @@ function ChoreCard({
                     className={cn(
                       'w-4 h-4 rounded border flex items-center justify-center transition-all flex-shrink-0',
                       sub.checked
-                        ? 'bg-amber-100 border-amber-300 text-amber-600'
-                        : 'border-amber-200 hover:border-amber-400',
+                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        : 'border-blue-200 hover:border-blue-400',
                       !editable && 'opacity-60 cursor-default'
                     )}
                   >
@@ -265,7 +265,7 @@ function ChoreCard({
                   </button>
                   <span className={cn(
                     'text-xs transition-colors',
-                    sub.checked ? 'text-amber-400 line-through' : 'text-amber-700/60'
+                    sub.checked ? 'text-slate-400 line-through' : 'text-slate-600/60'
                   )}>
                     {sub.text}
                   </span>
@@ -293,7 +293,7 @@ function CompletedSection({
     <div>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-xs text-amber-500/50 hover:text-amber-700 transition-colors"
+        className="flex items-center gap-2 text-xs text-blue-500/50 hover:text-slate-600 transition-colors"
       >
         {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         {chores.length} completed
@@ -309,7 +309,7 @@ function CompletedSection({
             {chores.map((chore) => {
               const diff = DIFFICULTY_CONFIG[chore.difficulty];
               return (
-                <div key={chore.id} className="bg-amber-50/50 rounded-xl p-3 flex items-center justify-between opacity-60">
+                <div key={chore.id} className="bg-blue-50/50 rounded-xl p-3 flex items-center justify-between opacity-60">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => editable && onToggleComplete(chore.id)}
@@ -321,11 +321,11 @@ function CompletedSection({
                     >
                       <Check className="w-3 h-3" />
                     </button>
-                    <span className="text-xs text-amber-500 line-through">{chore.title}</span>
+                    <span className="text-xs text-blue-500 line-through">{chore.title}</span>
                     <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full opacity-60', diff.color)}>{diff.emoji}</span>
                   </div>
                   {editable && (
-                    <button onClick={() => onDelete(chore.id)} className="text-amber-300 hover:text-red-400 transition-colors">
+                    <button onClick={() => onDelete(chore.id)} className="text-slate-300 hover:text-red-400 transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -389,8 +389,8 @@ function AddChoreModal({
         className="duck-card p-6 w-full max-w-md space-y-4 max-h-[85vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-amber-800">New Chore</h2>
-          <button type="button" onClick={onClose} className="text-amber-400 hover:text-amber-600">
+          <h2 className="font-semibold text-slate-700">New Chore</h2>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-blue-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -404,7 +404,7 @@ function AddChoreModal({
         />
 
         <div>
-          <p className="text-xs text-amber-500/50 mb-2">Difficulty</p>
+          <p className="text-xs text-blue-500/50 mb-2">Difficulty</p>
           <div className="flex gap-2">
             {DIFFICULTIES.map((d) => {
               const cfg = DIFFICULTY_CONFIG[d];
@@ -415,7 +415,7 @@ function AddChoreModal({
                   onClick={() => setDifficulty(d)}
                   className={cn(
                     'text-xs px-4 py-1.5 rounded-full font-medium transition-all flex items-center gap-1',
-                    difficulty === d ? cfg.color : 'bg-amber-50 text-amber-500'
+                    difficulty === d ? cfg.color : 'bg-blue-50 text-blue-500'
                   )}
                 >
                   {cfg.emoji} {cfg.label} ({cfg.points}pt)
@@ -426,18 +426,18 @@ function AddChoreModal({
         </div>
 
         <div>
-          <p className="text-xs text-amber-500/50 mb-2">Deadline (optional)</p>
+          <p className="text-xs text-blue-500/50 mb-2">Deadline (optional)</p>
           <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="w-full duck-input" />
         </div>
 
         <div>
-          <p className="text-xs text-amber-500/50 mb-2">Sub-tasks</p>
+          <p className="text-xs text-blue-500/50 mb-2">Sub-tasks</p>
           <div className="space-y-1 mb-2">
             {subtasks.map((s, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs text-amber-700/60">
-                <span className="w-4 h-4 rounded border border-amber-200 flex-shrink-0" />
+              <div key={i} className="flex items-center gap-2 text-xs text-slate-600/60">
+                <span className="w-4 h-4 rounded border border-blue-200 flex-shrink-0" />
                 <span className="flex-1">{s}</span>
-                <button type="button" onClick={() => setSubtasks((prev) => prev.filter((_, j) => j !== i))} className="text-amber-300 hover:text-red-400">
+                <button type="button" onClick={() => setSubtasks((prev) => prev.filter((_, j) => j !== i))} className="text-slate-300 hover:text-red-400">
                   <X className="w-3 h-3" />
                 </button>
               </div>
@@ -451,7 +451,7 @@ function AddChoreModal({
               placeholder="Add sub-task..."
               className="flex-1 duck-input text-xs"
             />
-            <button type="button" onClick={addSub} className="text-xs bg-amber-100 text-amber-600 px-3 py-1.5 rounded-xl hover:bg-amber-200 transition-colors">
+            <button type="button" onClick={addSub} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-200 transition-colors">
               Add
             </button>
           </div>
