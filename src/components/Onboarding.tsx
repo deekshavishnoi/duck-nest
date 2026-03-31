@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
-import { ArrowRight, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 
 type Step = 'welcome' | 'signup' | 'login' | 'join' | 'forgot-password';
 
@@ -37,7 +37,7 @@ export default function Onboarding() {
           <WelcomeScreen key="welcome" onSignUp={() => setStep('signup')} onLogIn={() => setStep('login')} onJoin={() => setStep('join')} />
         )}
         {step === 'signup' && (
-          <SignUpScreen key="signup" onBack={() => setStep('welcome')} />
+          <SignUpScreen key="signup" onBack={() => setStep('welcome')} onGoToLogin={() => setStep('login')} />
         )}
         {step === 'login' && (
           <LoginScreen key="login" onBack={() => setStep('welcome')} onForgotPassword={() => setStep('forgot-password')} />
@@ -164,21 +164,6 @@ function WelcomeScreen({ onSignUp, onLogIn, onJoin }: { onSignUp: () => void; on
 
       <div className="space-y-3">
         <button
-          onClick={handleGoogle}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 py-3.5 rounded-2xl text-sm font-semibold transition-all border-2 border-slate-200 active:scale-[0.98] disabled:opacity-60"
-        >
-          <GoogleIcon className="w-4.5 h-4.5" />
-          Continue with Google
-        </button>
-
-        <div className="flex items-center gap-3 py-1">
-          <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider">or</span>
-          <div className="flex-1 h-px bg-slate-200" />
-        </div>
-
-        <button
           onClick={onSignUp}
           className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-blue-200 active:scale-[0.98]"
         >
@@ -186,24 +171,38 @@ function WelcomeScreen({ onSignUp, onLogIn, onJoin }: { onSignUp: () => void; on
           Create your nest
         </button>
         <button
-          onClick={onJoin}
+          onClick={onLogIn}
           className="w-full flex items-center justify-center gap-2 bg-white hover:bg-blue-50 text-slate-600 py-3.5 rounded-2xl text-sm font-semibold transition-all border-2 border-blue-200 active:scale-[0.98]"
         >
-          <ArrowRight className="w-4 h-4" />
-          Join with invite code
+          Log in
         </button>
         <button
-          onClick={onLogIn}
-          className="text-xs text-blue-600/50 hover:text-slate-600 transition-colors pt-2"
+          onClick={onJoin}
+          className="w-full text-xs text-blue-600/50 hover:text-slate-600 transition-colors"
         >
-          Already have an account? <span className="underline">Log in</span>
+          Have an invite code? <span className="underline">Join a nest</span>
+        </button>
+
+        <div className="flex items-center gap-3 pt-2">
+          <div className="flex-1 h-px bg-slate-200" />
+          <span className="text-[10px] text-slate-400 uppercase tracking-wider">or continue with</span>
+          <div className="flex-1 h-px bg-slate-200" />
+        </div>
+
+        <button
+          onClick={handleGoogle}
+          disabled={loading}
+          className="mx-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 py-2.5 px-5 rounded-xl text-xs font-medium transition-all border border-slate-200 active:scale-[0.98] disabled:opacity-60"
+        >
+          <GoogleIcon className="w-4 h-4" />
+          Google
         </button>
       </div>
     </motion.div>
   );
 }
 
-function SignUpScreen({ onBack }: { onBack: () => void }) {
+function SignUpScreen({ onBack, onGoToLogin }: { onBack: () => void; onGoToLogin: () => void }) {
   const { signUp, logInWithGoogle } = useApp();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -248,24 +247,13 @@ function SignUpScreen({ onBack }: { onBack: () => void }) {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl">{error}</div>
+        <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl">
+          <span>{error}</span>
+          {error.includes('already') && (
+            <button type="button" onClick={onGoToLogin} className="ml-1 text-blue-600 font-semibold underline hover:text-blue-700">Log in instead?</button>
+          )}
+        </div>
       )}
-
-      <button
-        type="button"
-        onClick={handleGoogle}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 py-3 rounded-2xl text-sm font-semibold transition-all border-2 border-slate-200 active:scale-[0.98] disabled:opacity-60"
-      >
-        <GoogleIcon className="w-4 h-4" />
-        Continue with Google
-      </button>
-
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-slate-200" />
-        <span className="text-[10px] text-slate-400 uppercase tracking-wider">or</span>
-        <div className="flex-1 h-px bg-slate-200" />
-      </div>
 
       <div className="space-y-3">
         <input
@@ -305,6 +293,22 @@ function SignUpScreen({ onBack }: { onBack: () => void }) {
         {loading ? 'Creating...' : 'Create account 🐥'}
       </button>
       <p className="text-[10px] text-slate-400 text-center">A verification email will be sent to confirm your address</p>
+
+      <div className="flex items-center gap-3 pt-1">
+        <div className="flex-1 h-px bg-slate-200" />
+        <span className="text-[10px] text-slate-400 uppercase tracking-wider">or continue with</span>
+        <div className="flex-1 h-px bg-slate-200" />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={loading}
+        className="mx-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 py-2.5 px-5 rounded-xl text-xs font-medium transition-all border border-slate-200 active:scale-[0.98] disabled:opacity-60"
+      >
+        <GoogleIcon className="w-4 h-4" />
+        Google
+      </button>
     </motion.form>
   );
 }
@@ -356,22 +360,6 @@ function LoginScreen({ onBack, onForgotPassword }: { onBack: () => void; onForgo
         <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl">{error}</div>
       )}
 
-      <button
-        type="button"
-        onClick={handleGoogle}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 py-3 rounded-2xl text-sm font-semibold transition-all border-2 border-slate-200 active:scale-[0.98] disabled:opacity-60"
-      >
-        <GoogleIcon className="w-4 h-4" />
-        Continue with Google
-      </button>
-
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-slate-200" />
-        <span className="text-[10px] text-slate-400 uppercase tracking-wider">or</span>
-        <div className="flex-1 h-px bg-slate-200" />
-      </div>
-
       <div className="space-y-3">
         <input
           type="email"
@@ -406,6 +394,22 @@ function LoginScreen({ onBack, onForgotPassword }: { onBack: () => void; onForgo
         className="w-full text-xs text-blue-500/60 hover:text-blue-600 transition-colors text-center"
       >
         Forgot your password?
+      </button>
+
+      <div className="flex items-center gap-3 pt-1">
+        <div className="flex-1 h-px bg-slate-200" />
+        <span className="text-[10px] text-slate-400 uppercase tracking-wider">or continue with</span>
+        <div className="flex-1 h-px bg-slate-200" />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={loading}
+        className="mx-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 py-2.5 px-5 rounded-xl text-xs font-medium transition-all border border-slate-200 active:scale-[0.98] disabled:opacity-60"
+      >
+        <GoogleIcon className="w-4 h-4" />
+        Google
       </button>
     </motion.form>
   );
@@ -476,22 +480,6 @@ function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialC
           className="w-full bg-white border-2 border-blue-200 rounded-2xl px-4 py-3 text-sm text-center font-mono tracking-widest focus:outline-none focus:border-blue-400 placeholder:text-slate-300 transition-colors uppercase"
         />
 
-        <button
-          type="button"
-          onClick={handleGoogle}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 py-3 rounded-2xl text-sm font-semibold transition-all border-2 border-slate-200 active:scale-[0.98] disabled:opacity-60"
-        >
-          <GoogleIcon className="w-4 h-4" />
-          Join with Google
-        </button>
-
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider">or</span>
-          <div className="flex-1 h-px bg-slate-200" />
-        </div>
-
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -527,6 +515,22 @@ function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialC
         className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-blue-200"
       >
         {loading ? 'Joining...' : 'Join the nest 🐤'}
+      </button>
+
+      <div className="flex items-center gap-3 pt-1">
+        <div className="flex-1 h-px bg-slate-200" />
+        <span className="text-[10px] text-slate-400 uppercase tracking-wider">or continue with</span>
+        <div className="flex-1 h-px bg-slate-200" />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={loading}
+        className="mx-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 py-2.5 px-5 rounded-xl text-xs font-medium transition-all border border-slate-200 active:scale-[0.98] disabled:opacity-60"
+      >
+        <GoogleIcon className="w-4 h-4" />
+        Google
       </button>
     </motion.form>
   );

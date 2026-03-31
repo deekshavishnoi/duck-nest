@@ -40,7 +40,13 @@ export function ReadingStatsPanel({ items, ratings }: {
     return { total: items.length, finished: finished.length, reading: reading.length, totalPagesRead, avgRating, ratingCount: bookRatings.length, pagesPerDay };
   }, [items, ratings]);
 
-  if (stats.total === 0) return null;
+  if (stats.total === 0) return (
+    <div className="text-center py-4 space-y-1.5">
+      <p className="text-2xl">📚</p>
+      <p className="text-xs font-medium text-slate-500">Your reading journey will appear here</p>
+      <p className="text-[10px] text-slate-400">Add a book or start reading to see your stats.</p>
+    </div>
+  );
 
   return (
     <div className="space-y-2">
@@ -107,7 +113,13 @@ export function WatchStatsPanel({ items, ratings }: {
     return { total: items.length, watched: watched.length, movies, series, docs, watchedLastWeek, watchedLastMonth, avgRating, ratingCount: watchRatings.length, distribution };
   }, [items, ratings]);
 
-  if (stats.total === 0) return null;
+  if (stats.total === 0) return (
+    <div className="text-center py-4 space-y-1.5">
+      <p className="text-2xl">🎬</p>
+      <p className="text-xs font-medium text-slate-500">Your movie &amp; series activity will show up here</p>
+      <p className="text-[10px] text-slate-400">Watch something first to unlock your stats.</p>
+    </div>
+  );
 
   return (
     <div className="space-y-2">

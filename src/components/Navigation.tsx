@@ -74,13 +74,13 @@ export default function Navigation() {
                         key={href}
                         href={href}
                         className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                          'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors',
                           isActive
-                            ? 'bg-blue-50 text-slate-600 border border-blue-200'
-                            : 'text-blue-600/60 hover:bg-blue-50/50 hover:text-slate-600'
+                            ? 'bg-blue-50/80 text-blue-600 font-semibold'
+                            : 'text-slate-400 hover:bg-blue-50/50 hover:text-slate-600 font-medium'
                         )}
                       >
-                        <Icon className="w-4.5 h-4.5" fill={isActive ? 'currentColor' : 'none'} />
+                        <Icon className="w-4.5 h-4.5" strokeWidth={isActive ? 2.5 : 2} />
                         {label}
                       </Link>
                     );
@@ -103,18 +103,18 @@ export default function Navigation() {
                 href={href}
                 className={cn(
                   'flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-colors relative min-w-0 flex-shrink-0',
-                  isActive ? 'text-blue-600' : 'text-slate-400/50 hover:text-blue-500'
+                  isActive ? 'text-blue-600' : 'text-slate-400/60 hover:text-blue-400'
                 )}
               >
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill"
-                    className="absolute inset-0 bg-blue-50 rounded-xl"
+                    className="absolute inset-0 bg-blue-50/70 rounded-xl"
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                   />
                 )}
-                <Icon className="w-4.5 h-4.5 relative z-10" fill={isActive ? 'currentColor' : 'none'} />
-                <span className="text-[9px] font-medium relative z-10">{label}</span>
+                <Icon className="w-4.5 h-4.5 relative z-10" strokeWidth={isActive ? 2.5 : 1.75} />
+                <span className={cn('text-[9px] relative z-10', isActive ? 'font-semibold' : 'font-medium')}>{label}</span>
               </Link>
             );
           })}
