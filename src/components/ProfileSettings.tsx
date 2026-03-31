@@ -16,7 +16,8 @@ export default function ProfileSettings() {
 
   const handleCopyInvite = () => {
     const code = data.invite.code || generateInviteCode();
-    navigator.clipboard.writeText(`Join our DuckNest! Code: ${code}`);
+    const link = `${window.location.origin}?invite=${code}`;
+    navigator.clipboard.writeText(`Join our DuckNest! 🦆\n${link}`);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };

@@ -7,8 +7,14 @@ import { ArrowRight, UserPlus, Eye, EyeOff } from 'lucide-react';
 
 type Step = 'welcome' | 'signup' | 'login' | 'join';
 
+function getInviteFromURL(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('invite');
+}
+
 export default function Onboarding() {
-  const [step, setStep] = useState<Step>('welcome');
+  const inviteFromURL = getInviteFromURL();
+  const [step, setStep] = useState<Step>(inviteFromURL ? 'join' : 'welcome');
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
@@ -25,7 +31,7 @@ export default function Onboarding() {
           <LoginScreen key="login" onBack={() => setStep('welcome')} />
         )}
         {step === 'join' && (
-          <JoinScreen key="join" onBack={() => setStep('welcome')} />
+          <JoinScreen key="join" onBack={() => setStep('welcome')} initialCode={inviteFromURL || ''} />
         )}
       </AnimatePresence>
     </div>
@@ -298,9 +304,9 @@ function LoginScreen({ onBack }: { onBack: () => void }) {
   );
 }
 
-function JoinScreen({ onBack }: { onBack: () => void }) {
+function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialCode?: string }) {
   const { joinWithInvite } = useApp();
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
