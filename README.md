@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DuckNest 🦆
+
+A cozy, duck-themed shared space for couples. Mood sync, date planning, memories, shopping lists & chores — all in one private little nest.
+
+## Features
+
+- **Nest (Home)** — Mood sync between partners, love meter, days-together countdown
+- **Date Planner** — Browse and plan dates by category, track completed dates with photos & notes
+- **Memories** — Auto-generated memory blog from completed dates
+- **Shopping Lists** — Shared and individual shopping lists with real-time tabs
+- **Chores** — Assign and track household chores together
+- **Profiles** — Display names, partner nicknames, invite system, and privacy controls
+- **Solo-first** — Works immediately after signup; invite your partner when ready
+
+## Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript 5
+- **Styling:** Tailwind CSS 3.4 with custom duck/amber theme
+- **Animations:** Framer Motion
+- **Icons:** Lucide React
+- **Storage:** localStorage (no backend required)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/            # Next.js App Router pages
+├── components/     # All UI components
+├── hooks/          # useAppData (global context) & useLocalStorage
+├── lib/            # Utilities and seed data
+└── types/          # TypeScript type definitions
+```
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The easiest way to deploy is with [Vercel](https://vercel.com/new):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push this repo to GitHub
+2. Import the repository on Vercel
+3. Deploy — no environment variables needed
+
+## License
+
+Private project.

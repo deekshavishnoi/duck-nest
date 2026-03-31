@@ -3,25 +3,94 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #fef9ef;
+  --foreground: #44381f;
+  --card: #fffdf7;
+  --card-border: #f0e6d0;
+  --accent: #e8a317;
+  --accent-soft: #fdf0d5;
+  --muted: #a89474;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e8c872;
+  border-radius: 999px;
+}
+
+/* Range input styling */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #fdf0d5;
+  border-radius: 999px;
+  outline: none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0b429, #e8a317);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(232, 163, 23, 0.35);
+  transition: transform 0.15s;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0b429, #e8a317);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(232, 163, 23, 0.35);
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Card base style */
+@layer components {
+  .duck-card {
+    @apply bg-[var(--card)] rounded-3xl border border-[var(--card-border)] shadow-sm;
+    box-shadow: 0 1px 3px rgba(168, 148, 116, 0.08), 0 4px 12px rgba(168, 148, 116, 0.04);
+  }
+  .duck-card-warm {
+    @apply bg-gradient-to-br from-amber-50/80 to-orange-50/40 rounded-3xl border border-amber-100/60 shadow-sm;
+  }
+  .duck-btn {
+    @apply bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-semibold transition-all active:scale-[0.98] shadow-lg shadow-amber-200/50;
+  }
+  .duck-btn-soft {
+    @apply bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-2xl font-medium transition-all active:scale-[0.98];
+  }
+  .duck-input {
+    @apply bg-white border-2 border-amber-100 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-300 placeholder:text-amber-300/60 transition-colors;
   }
 }
