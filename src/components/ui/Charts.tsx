@@ -101,24 +101,78 @@ export function ReadingProgressBar({
 /* ---- Mini Bar Chart (for statistics) ---- */
 export function MiniBarChart({
   data,
-  maxHeight = 60,
+  maxHeight = 50,
 }: {
   data: { label: string; value: number; color?: string }[];
   maxHeight?: number;
 }) {
   const max = Math.max(...data.map((d) => d.value), 1);
   return (
-    <div className="flex items-end gap-1.5 justify-center" style={{ height: maxHeight + 24 }}>
-      {data.map((d, i) => (
-        <div key={i} className="flex flex-col items-center gap-1" style={{ minWidth: 20 }}>
-          <span className="text-[9px] text-blue-600 font-medium">{d.value || ''}</span>
-          <div
-            className={cn('w-5 rounded-t-sm transition-all', d.color || 'bg-blue-300')}
-            style={{ height: Math.max(2, (d.value / max) * maxHeight) }}
-          />
-          <span className="text-[8px] text-blue-500/60">{d.label}</span>
+    <div className="overflow-x-auto -mx-2 px-2">
+      <div className="flex items-end gap-1 justify-center" style={{ height: maxHeight + 28, minWidth: data.length * 28 }}>
+        {data.map((d, i) => (
+          <div key={i} className="flex flex-col items-center gap-0.5" style={{ minWidth: 22 }}>
+            <span className="text-[8px] text-blue-600 font-medium">{d.value || ''}</span>
+            <div
+              className={cn('w-4 rounded-t-sm transition-all', d.color || 'bg-blue-300')}
+              style={{ height: Math.max(2, (d.value / max) * maxHeight) }}
+            />
+            <span className="text-[7px] text-blue-500/60 whitespace-nowrap">{d.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---- Dual Bar Chart (two users' rating distributions) ---- */
+export function DualBarChart({
+  data1,
+  data2,
+  label1 = 'You',
+  label2 = 'Partner',
+  maxHeight = 50,
+}: {
+  data1: { label: string; value: number }[];
+  data2: { label: string; value: number }[];
+  label1?: string;
+  label2?: string;
+  maxHeight?: number;
+}) {
+  const allValues = [...data1.map((d) => d.value), ...data2.map((d) => d.value)];
+  const max = Math.max(...allValues, 1);
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-center gap-4 text-[9px]">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-400 inline-block" /> {label1}</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-rose-300 inline-block" /> {label2}</span>
+      </div>
+      <div className="overflow-x-auto -mx-2 px-2">
+        <div className="flex items-end gap-1 justify-center" style={{ height: maxHeight + 28, minWidth: data1.length * 36 }}>
+          {data1.map((d, i) => (
+            <div key={i} className="flex flex-col items-center gap-0.5" style={{ minWidth: 30 }}>
+              <div className="flex items-end gap-px">
+                <div className="flex flex-col items-center">
+                  {d.value > 0 && <span className="text-[7px] text-blue-500 font-medium">{d.value}</span>}
+                  <div
+                    className="w-3 rounded-t-sm bg-blue-400 transition-all"
+                    style={{ height: Math.max(1, (d.value / max) * maxHeight) }}
+                  />
+                </div>
+                <div className="flex flex-col items-center">
+                  {data2[i]?.value > 0 && <span className="text-[7px] text-rose-400 font-medium">{data2[i].value}</span>}
+                  <div
+                    className="w-3 rounded-t-sm bg-rose-300 transition-all"
+                    style={{ height: Math.max(1, ((data2[i]?.value || 0) / max) * maxHeight) }}
+                  />
+                </div>
+              </div>
+              <span className="text-[7px] text-blue-500/60 whitespace-nowrap">{d.label}</span>
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 }

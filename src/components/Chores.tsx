@@ -8,6 +8,7 @@ import { cn, formatDateShort } from '@/lib/utils';
 import {
   Plus, Trash2, Check, X, Calendar, ChevronDown, ChevronUp, Heart,
 } from 'lucide-react';
+import { DuckSitting } from '@/components/ui/DuckDoodles';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const TAB_KEYS: ChoreTab[] = ['user1', 'user2', 'together'];
@@ -65,7 +66,7 @@ export default function Chores() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Chores</h1>
-          <p className="text-sm text-blue-600/40">{partner ? 'teamwork makes the dream work' : 'your task tracker'}</p>
+          <p className="text-sm text-amber-600/40">{partner ? 'teamwork makes the dream work' : 'your task tracker'}</p>
         </div>
         {editable && (
           <motion.button
@@ -123,8 +124,8 @@ export default function Chores() {
 
       {active.length === 0 && done.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-4xl mb-2">✨</p>
-          <p className="text-sm text-blue-600/40">No chores yet. Add one!</p>
+          <DuckSitting className="mx-auto mb-3 text-amber-400/60" size={56} />
+          <p className="text-sm text-amber-600/40">No chores yet. Add one!</p>
         </div>
       )}
 

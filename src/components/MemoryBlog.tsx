@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
 import { formatDate } from '@/lib/utils';
 import { Trash2, X } from 'lucide-react';
+import { DuckSleeping } from '@/components/ui/DuckDoodles';
 
 export default function MemoryBlog() {
   const { data, deleteMemory } = useApp();
@@ -19,15 +20,15 @@ export default function MemoryBlog() {
     <div className="space-y-5">
       <div className="text-center space-y-1">
         <h1 className="text-2xl font-bold text-slate-800">Memories</h1>
-        <p className="text-sm text-blue-600/40">
+        <p className="text-sm text-amber-600/40">
           {data.memories.length} moment{data.memories.length !== 1 ? 's' : ''} captured
         </p>
       </div>
 
       {sorted.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-5xl mb-3">📷</p>
-          <p className="text-sm text-blue-600/50">No memories yet.</p>
+          <DuckSleeping className="mx-auto mb-3 text-amber-400/60" size={64} />
+          <p className="text-sm text-amber-600/50">No memories yet.</p>
           <p className="text-xs text-slate-400 mt-1">
             Complete a date and upload a photo to start your scrapbook 🐥
           </p>

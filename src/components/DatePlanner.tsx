@@ -6,6 +6,7 @@ import { useApp } from '@/hooks/useAppData';
 import { DATE_CATEGORY_CONFIG, DateCategory, DateIdea, ChecklistItem } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { DuckWithHeart } from '@/components/ui/DuckDoodles';
 import {
   Plus, Check, Trash2, X, MapPin, Clock,
   Pencil, ExternalLink, ListChecks, CalendarHeart, ChevronDown,
@@ -49,7 +50,7 @@ export default function DatePlanner() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Our Dates</h1>
-          <p className="text-sm text-blue-600/40">
+          <p className="text-sm text-amber-600/40">
             {upcoming.length} adventure{upcoming.length !== 1 ? 's' : ''} waiting · {completed.length} done
           </p>
         </div>
@@ -151,8 +152,8 @@ export default function DatePlanner() {
 
       {filtered.length === 0 && !showCompleted && (
         <div className="text-center py-10">
-          <p className="text-4xl mb-2">🦆</p>
-          <p className="text-sm text-blue-600/40">
+          <DuckWithHeart className="mx-auto mb-3 text-amber-400/60" size={56} />
+          <p className="text-sm text-amber-600/40">
             No date ideas here yet. Plan your next adventure together!
           </p>
         </div>
@@ -163,7 +164,7 @@ export default function DatePlanner() {
         <div>
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className="flex items-center gap-2 text-sm text-blue-600/40 hover:text-slate-600 transition-colors font-medium w-full"
+            className="flex items-center gap-2 text-sm text-amber-600/40 hover:text-slate-600 transition-colors font-medium w-full"
           >
             {showCompleted ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             Completed adventures ({completed.length})

@@ -7,6 +7,7 @@ import { MOOD_CONFIG, Mood, PersonMoodEntry } from '@/types';
 import CountdownTimer from './CountdownTimer';
 import { Heart, Sparkles, Settings, X, MessageCircleHeart } from 'lucide-react';
 import { cn, randomBetween } from '@/lib/utils';
+import { DuckCouple, DuckWithHeart, DuckFootprints, SparkleStars, DuckDivider } from '@/components/ui/DuckDoodles';
 
 const LOW_MOOD_MESSAGES = [
   "They might not be feeling their best today. A little extra love goes a long way 💛",
@@ -49,6 +50,9 @@ export default function LoveMeter() {
     <div className="space-y-5">
       {/* Header */}
       <div className="text-center space-y-1">
+        <div className="flex justify-center mb-2">
+          {partner ? <DuckCouple size={40} className="opacity-60" /> : <DuckWithHeart size={36} className="opacity-60" />}
+        </div>
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -56,10 +60,11 @@ export default function LoveMeter() {
         >
           {nestTitle}
         </motion.h1>
-        <p className="text-xs text-blue-600/40 italic">your cozy little world 🦆</p>
+        <p className="text-xs text-amber-600/40 italic">your cozy little world 🦆</p>
+        <DuckFootprints className="opacity-40 mx-auto max-w-[200px]" />
         <button
           onClick={() => setShowSettings(true)}
-          className="text-slate-400/40 hover:text-blue-600 transition-colors inline-flex items-center gap-1 text-[10px] mt-1"
+          className="text-slate-400/40 hover:text-amber-600 transition-colors inline-flex items-center gap-1 text-[10px] mt-1"
         >
           <Settings className="w-3 h-3" /> settings
         </button>
@@ -200,7 +205,7 @@ export default function LoveMeter() {
       >
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-blue-500" />
+            <Sparkles className="w-4 h-4 text-amber-500" />
             Love Level
           </h2>
           <motion.button
@@ -250,6 +255,9 @@ export default function LoveMeter() {
       {/* Countdown */}
       <CountdownTimer />
 
+      {/* Decorative divider */}
+      <DuckDivider />
+
       {/* Quote */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -257,6 +265,7 @@ export default function LoveMeter() {
         transition={{ delay: 0.5 }}
         className="text-center py-3"
       >
+        <SparkleStars className="mx-auto max-w-[160px] mb-2" />
         <p className="text-xs text-slate-400/40 italic">
           &ldquo;Two little ducks, waddling through life together.&rdquo; 🦆🦆
         </p>

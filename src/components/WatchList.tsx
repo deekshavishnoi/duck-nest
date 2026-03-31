@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
 import { WatchType, WatchStatus, WatchItem, WATCH_TYPE_CONFIG, WATCH_STATUS_CONFIG } from '@/types';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, X, Pencil, Tv, Check } from 'lucide-react';
+import { Plus, Trash2, X, Pencil, Check } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StarRating } from '@/components/ui/Charts';
 import { WatchStatsPanel, StatsToggle, StatsDropdown } from '@/components/Statistics';
+import { DuckSleeping } from '@/components/ui/DuckDoodles';
 
 const TYPE_KEYS: WatchType[] = ['movie', 'series', 'documentary'];
 const STATUS_KEYS: WatchStatus[] = ['want-to-watch', 'watching', 'watched'];
@@ -32,7 +33,7 @@ export default function WatchList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Watch List</h1>
-          <p className="text-sm text-blue-600/40">{partner ? 'movies & shows for two 🍿' : 'your watch queue'}</p>
+          <p className="text-sm text-amber-600/40">{partner ? 'movies & shows for two 🍿' : 'your watch queue'}</p>
         </div>
         <div className="flex items-center gap-2">
           <StatsToggle open={showStats} onToggle={() => setShowStats(!showStats)} />
@@ -83,7 +84,7 @@ export default function WatchList() {
           animate={{ opacity: 1 }}
           className="duck-card text-center py-12"
         >
-          <Tv className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <DuckSleeping size={48} className="mx-auto mb-3 opacity-40" />
           <p className="text-sm text-slate-600/60">
             {filterStatus === 'all' ? 'No items yet — add something to watch!' : 'Nothing in this category'}
           </p>
@@ -358,29 +359,33 @@ function WatchCard({
 
       {/* Rating section for watched items */}
       {isWatched && (
-        <div className="mt-2 pt-2 border-t border-blue-100 space-y-1.5">
-          <StarRating value={myRating?.rating || 0} onChange={(r) => onRate(r, reviewText || undefined)} label="Your rating" />
-          {myRating && myRating.rating > 0 && (
-            <button onClick={() => setShowReview(!showReview)}
-              className="text-[10px] text-blue-500 hover:text-slate-600 transition-colors">
-              {showReview ? 'Hide review' : (myRating.review ? 'Edit review' : '+ Add review')}
-            </button>
-          )}
-          {showReview && (
-            <div className="space-y-1.5">
-              <textarea className="duck-input w-full resize-none text-xs" rows={2} placeholder="Write a short review..."
-                value={reviewText} onChange={(e) => setReviewText(e.target.value)} />
-              <button onClick={() => { onRate(myRating?.rating || 0, reviewText.trim() || undefined); setShowReview(false); }}
-                className="duck-btn-soft text-[10px] px-3 py-1 rounded-lg">Save review</button>
-            </div>
-          )}
-          {myRating?.review && !showReview && (
-            <p className="text-[10px] text-blue-600/50 italic">&quot;{myRating.review}&quot;</p>
-          )}
+        <div className="mt-2 pt-2 border-t border-amber-100/60 space-y-2">
+          {/* My rating */}
+          <div className="bg-blue-50/40 rounded-xl px-3 py-2">
+            <StarRating value={myRating?.rating || 0} onChange={(r) => onRate(r, reviewText || undefined)} label="You" />
+            {myRating && myRating.rating > 0 && (
+              <button onClick={() => setShowReview(!showReview)}
+                className="text-[10px] text-blue-500 hover:text-slate-600 transition-colors mt-1">
+                {showReview ? 'Hide review' : (myRating.review ? 'Edit review' : '+ Add review')}
+              </button>
+            )}
+            {showReview && (
+              <div className="space-y-1.5 mt-1">
+                <textarea className="duck-input w-full resize-none text-xs" rows={2} placeholder="Write a short review..."
+                  value={reviewText} onChange={(e) => setReviewText(e.target.value)} />
+                <button onClick={() => { onRate(myRating?.rating || 0, reviewText.trim() || undefined); setShowReview(false); }}
+                  className="duck-btn-soft text-[10px] px-3 py-1 rounded-lg">Save review</button>
+              </div>
+            )}
+            {myRating?.review && !showReview && (
+              <p className="text-[10px] text-blue-600/50 italic mt-0.5">&quot;{myRating.review}&quot;</p>
+            )}
+          </div>
+          {/* Partner rating */}
           {partnerRating && partnerRating.rating > 0 && (
-            <div className="mt-1">
+            <div className="bg-rose-50/40 rounded-xl px-3 py-2">
               <StarRating value={partnerRating.rating} readonly size="sm" label="Partner" />
-              {partnerRating.review && <p className="text-[10px] text-blue-600/50 mt-0.5 italic">&quot;{partnerRating.review}&quot;</p>}
+              {partnerRating.review && <p className="text-[10px] text-rose-500/50 mt-0.5 italic">&quot;{partnerRating.review}&quot;</p>}
             </div>
           )}
         </div>

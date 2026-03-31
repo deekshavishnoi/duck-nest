@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { DuckCouple, DuckSitting, DuckFootprints, FlowerDoodle } from '@/components/ui/DuckDoodles';
 
 type Step = 'welcome' | 'signup' | 'login' | 'join' | 'forgot-password';
 
@@ -82,7 +83,7 @@ function PasswordInput({
         name={name}
         required
         minLength={minLength}
-        className="w-full bg-white border-2 border-blue-100 rounded-2xl px-4 py-3 pr-11 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
+        className="w-full bg-white border-2 border-amber-100/60 rounded-2xl px-4 py-3 pr-11 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
       />
       <button
         type="button"
@@ -99,12 +100,17 @@ function PasswordInput({
 function DuckScene() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      {/* Warm ambient glows */}
+      <div className="absolute top-[15%] left-[10%] w-40 h-40 bg-amber-100/25 rounded-full blur-3xl" />
+      <div className="absolute bottom-[25%] right-[10%] w-36 h-36 bg-blue-100/20 rounded-full blur-3xl" />
+      <div className="absolute top-[55%] left-[60%] w-28 h-28 bg-pink-100/15 rounded-full blur-3xl" />
+
       {/* Floating elements */}
       {[...Array(5)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute text-2xl"
-          style={{ left: `${15 + i * 18}%`, top: `${10 + (i % 3) * 25}%` }}
+          className="absolute"
+          style={{ left: `${15 + i * 18}%`, top: `${10 + (i % 3) * 25}%`, filter: 'saturate(0.7)' }}
           animate={{
             y: [0, -15, 0],
             rotate: [0, i % 2 === 0 ? 5 : -5, 0],
@@ -116,9 +122,17 @@ function DuckScene() {
             delay: i * 0.4,
           }}
         >
-          {['🐥', '🌼', '🐤', '🌸', '🦆'][i]}
+          <span className="text-2xl opacity-30">{['🐥', '🌼', '🐤', '🌸', '🦆'][i]}</span>
         </motion.div>
       ))}
+
+      {/* Corner doodle accents */}
+      <div className="absolute bottom-8 left-4 opacity-10">
+        <FlowerDoodle size={24} />
+      </div>
+      <div className="absolute top-12 right-6 opacity-10">
+        <FlowerDoodle size={20} />
+      </div>
     </div>
   );
 }
@@ -131,10 +145,15 @@ function WelcomeScreen({ onSignUp, onLogIn, onJoin }: { onSignUp: () => void; on
   const handleGoogle = async () => {
     setError('');
     setLoading(true);
-    const result = await logInWithGoogle();
-    if (!result.success) {
+    try {
+      const result = await logInWithGoogle();
+      if (!result.success) {
+        setError(result.error || 'Google sign-in failed');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      setError(result.error || 'Google sign-in failed');
     }
   };
 
@@ -149,13 +168,14 @@ function WelcomeScreen({ onSignUp, onLogIn, onJoin }: { onSignUp: () => void; on
       <motion.div
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        className="text-7xl mb-2"
+        className="mb-2"
       >
-        🦆
+        <DuckCouple size={50} className="mx-auto opacity-80" />
       </motion.div>
       <div>
         <h1 className="text-3xl font-bold text-slate-800">DuckNest</h1>
-        <p className="text-sm text-slate-600/60 mt-1">a cozy little world for two</p>
+        <p className="text-sm text-amber-600/50 mt-1">a cozy little world for two</p>
+        <DuckFootprints className="opacity-30 mx-auto max-w-[180px] mt-2" />
       </div>
 
       {error && (
@@ -165,20 +185,20 @@ function WelcomeScreen({ onSignUp, onLogIn, onJoin }: { onSignUp: () => void; on
       <div className="space-y-3">
         <button
           onClick={onSignUp}
-          className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-blue-200 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-blue-200 active:scale-[0.98]"
         >
           <UserPlus className="w-4 h-4" />
           Create your nest
         </button>
         <button
           onClick={onLogIn}
-          className="w-full flex items-center justify-center gap-2 bg-white hover:bg-blue-50 text-slate-600 py-3.5 rounded-2xl text-sm font-semibold transition-all border-2 border-blue-200 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 bg-white hover:bg-amber-50 text-slate-600 py-3.5 rounded-2xl text-sm font-semibold transition-all border-2 border-amber-200/60 active:scale-[0.98]"
         >
           Log in
         </button>
         <button
           onClick={onJoin}
-          className="w-full text-xs text-blue-600/50 hover:text-slate-600 transition-colors"
+          className="w-full text-xs text-amber-600/50 hover:text-amber-700 transition-colors"
         >
           Have an invite code? <span className="underline">Join a nest</span>
         </button>
@@ -214,20 +234,30 @@ function SignUpScreen({ onBack, onGoToLogin }: { onBack: () => void; onGoToLogin
     e.preventDefault();
     setError('');
     setLoading(true);
-    const result = await signUp(name, email, password);
-    if (!result.success) {
+    try {
+      const result = await signUp(name, email, password);
+      if (!result.success) {
+        setError(result.error || 'Something went wrong');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      setError(result.error || 'Something went wrong');
     }
   };
 
   const handleGoogle = async () => {
     setError('');
     setLoading(true);
-    const result = await logInWithGoogle();
-    if (!result.success) {
+    try {
+      const result = await logInWithGoogle();
+      if (!result.success) {
+        setError(result.error || 'Google sign-in failed');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      setError(result.error || 'Google sign-in failed');
     }
   };
 
@@ -241,7 +271,7 @@ function SignUpScreen({ onBack, onGoToLogin }: { onBack: () => void; onGoToLogin
     >
       <button type="button" onClick={onBack} className="text-xs text-blue-600/50 hover:text-slate-600">&larr; Back</button>
       <div className="text-center">
-        <p className="text-4xl mb-2">🐣</p>
+        <div className="mb-2"><DuckSitting size={44} className="mx-auto opacity-70" /></div>
         <h2 className="text-xl font-bold text-slate-800">Create your nest</h2>
         <p className="text-xs text-slate-600/50 mt-1">Set up your account to get started</p>
       </div>
@@ -263,7 +293,7 @@ function SignUpScreen({ onBack, onGoToLogin }: { onBack: () => void; onGoToLogin
           autoComplete="name"
           name="name"
           required
-          className="w-full bg-white border-2 border-blue-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
+          className="w-full bg-white border-2 border-amber-100/60 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
         />
         <input
           type="email"
@@ -273,7 +303,7 @@ function SignUpScreen({ onBack, onGoToLogin }: { onBack: () => void; onGoToLogin
           autoComplete="email"
           name="email"
           required
-          className="w-full bg-white border-2 border-blue-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
+          className="w-full bg-white border-2 border-amber-100/60 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
         />
         <PasswordInput
           value={password}
@@ -324,20 +354,30 @@ function LoginScreen({ onBack, onForgotPassword }: { onBack: () => void; onForgo
     e.preventDefault();
     setError('');
     setLoading(true);
-    const result = await logIn(email, password);
-    if (!result.success) {
+    try {
+      const result = await logIn(email, password);
+      if (!result.success) {
+        setError(result.error || 'Something went wrong');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      setError(result.error || 'Something went wrong');
     }
   };
 
   const handleGoogle = async () => {
     setError('');
     setLoading(true);
-    const result = await logInWithGoogle();
-    if (!result.success) {
+    try {
+      const result = await logInWithGoogle();
+      if (!result.success) {
+        setError(result.error || 'Google sign-in failed');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      setError(result.error || 'Google sign-in failed');
     }
   };
 
@@ -369,7 +409,7 @@ function LoginScreen({ onBack, onForgotPassword }: { onBack: () => void; onForgo
           autoComplete="email"
           name="email"
           required
-          className="w-full bg-white border-2 border-blue-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
+          className="w-full bg-white border-2 border-amber-100/60 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
         />
         <PasswordInput
           value={password}
@@ -428,10 +468,15 @@ function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialC
     e.preventDefault();
     setError('');
     setLoading(true);
-    const result = await joinWithInvite(code, name, email, password);
-    if (!result.success) {
+    try {
+      const result = await joinWithInvite(code, name, email, password);
+      if (!result.success) {
+        setError(result.error || 'Something went wrong');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      setError(result.error || 'Something went wrong');
     }
   };
 
@@ -442,10 +487,15 @@ function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialC
     }
     setError('');
     setLoading(true);
-    const result = await joinWithInviteGoogle(code);
-    if (!result.success) {
+    try {
+      const result = await joinWithInviteGoogle(code);
+      if (!result.success) {
+        setError(result.error || 'Google sign-in failed');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      setError(result.error || 'Google sign-in failed');
     }
   };
 
@@ -461,7 +511,7 @@ function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialC
       <div className="text-center">
         <p className="text-4xl mb-2">💌</p>
         <h2 className="text-xl font-bold text-slate-800">Join a nest</h2>
-        <p className="text-xs text-slate-600/50 mt-1">Enter the invite code from your partner</p>
+        <p className="text-xs text-amber-600/40 mt-1">Enter the invite code from your partner</p>
       </div>
 
       {error && (
@@ -487,7 +537,7 @@ function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialC
           autoComplete="name"
           name="name"
           required
-          className="w-full bg-white border-2 border-blue-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
+          className="w-full bg-white border-2 border-amber-100/60 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
         />
         <input
           type="email"
@@ -497,7 +547,7 @@ function JoinScreen({ onBack, initialCode = '' }: { onBack: () => void; initialC
           autoComplete="email"
           name="email"
           required
-          className="w-full bg-white border-2 border-blue-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
+          className="w-full bg-white border-2 border-amber-100/60 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
         />
         <PasswordInput
           value={password}
@@ -606,7 +656,7 @@ function ForgotPasswordScreen({ onBack }: { onBack: () => void }) {
         autoComplete="email"
         name="email"
         required
-        className="w-full bg-white border-2 border-blue-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
+        className="w-full bg-white border-2 border-amber-100/60 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-300 placeholder:text-slate-300 transition-colors"
       />
 
       <button

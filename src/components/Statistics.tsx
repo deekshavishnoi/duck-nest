@@ -3,7 +3,8 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReadingItem, WatchItem, ItemRating } from '@/types';
-import { MiniBarChart, StarRating } from '@/components/ui/Charts';
+import { MiniBarChart, StarRating, DualBarChart } from '@/components/ui/Charts';
+import { useApp } from '@/hooks/useAppData';
 
 /* ---- Reading Stats Panel ---- */
 export function ReadingStatsPanel({ items, ratings }: {
@@ -85,6 +86,8 @@ export function WatchStatsPanel({ items, ratings }: {
   items: WatchItem[];
   ratings: Record<string, ItemRating>;
 }) {
+  const { currentUser, partner, myDisplayName, partnerDisplayName } = useApp();
+
   const stats = useMemo(() => {
     const watched = items.filter((w) => w.status === 'watched');
     const movies = watched.filter((w) => w.type === 'movie').length;
@@ -98,20 +101,51 @@ export function WatchStatsPanel({ items, ratings }: {
     const watchedLastWeek = watched.filter((w) => w.watchedAt && new Date(w.watchedAt) >= oneWeekAgo).length;
     const watchedLastMonth = watched.filter((w) => w.watchedAt && new Date(w.watchedAt) >= oneMonthAgo).length;
 
-    // Ratings
-    const watchRatings = Object.entries(ratings)
-      .filter(([key]) => items.some((w) => key.startsWith(w.id + ':')))
-      .map(([, r]) => r);
-    const avgRating = watchRatings.length > 0
-      ? watchRatings.reduce((sum, r) => sum + r.rating, 0) / watchRatings.length : 0;
+    // Per-user ratings
+    const myId = currentUser?.id;
+    const partnerId = partner?.id;
 
-    const distribution = [1, 2, 3, 4, 5].map((star) => ({
-      label: `${star}★`,
-      value: watchRatings.filter((r) => Math.round(r.rating) === star).length,
+    const myRatings: ItemRating[] = [];
+    const partnerRatings: ItemRating[] = [];
+    Object.entries(ratings).forEach(([key, r]) => {
+      const matchesItem = items.some((w) => key.startsWith(w.id + ':'));
+      if (!matchesItem) return;
+      if (myId && key.endsWith(':' + myId)) myRatings.push(r);
+      if (partnerId && key.endsWith(':' + partnerId)) partnerRatings.push(r);
+    });
+
+    const allRatings = [...myRatings, ...partnerRatings];
+    const avgRating = allRatings.length > 0
+      ? allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length : 0;
+
+    // Half-star buckets: 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5
+    const buckets = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+    const toBucket = (rating: number) => {
+      const rounded = Math.round(rating * 2) / 2; // round to nearest 0.5
+      return Math.max(0.5, Math.min(5, rounded));
+    };
+
+    const myDistribution = buckets.map((b) => ({
+      label: b % 1 === 0 ? `${b}` : `${b}`,
+      value: myRatings.filter((r) => toBucket(r.rating) === b).length,
+    }));
+    const partnerDistribution = buckets.map((b) => ({
+      label: b % 1 === 0 ? `${b}` : `${b}`,
+      value: partnerRatings.filter((r) => toBucket(r.rating) === b).length,
     }));
 
-    return { total: items.length, watched: watched.length, movies, series, docs, watchedLastWeek, watchedLastMonth, avgRating, ratingCount: watchRatings.length, distribution };
-  }, [items, ratings]);
+    const myAvg = myRatings.length > 0
+      ? myRatings.reduce((sum, r) => sum + r.rating, 0) / myRatings.length : 0;
+    const partnerAvg = partnerRatings.length > 0
+      ? partnerRatings.reduce((sum, r) => sum + r.rating, 0) / partnerRatings.length : 0;
+
+    return {
+      total: items.length, watched: watched.length, movies, series, docs,
+      watchedLastWeek, watchedLastMonth, avgRating,
+      ratingCount: allRatings.length, myRatingCount: myRatings.length, partnerRatingCount: partnerRatings.length,
+      myDistribution, partnerDistribution, myAvg, partnerAvg,
+    };
+  }, [items, ratings, currentUser, partner]);
 
   if (stats.total === 0) return (
     <div className="text-center py-4 space-y-1.5">
@@ -120,6 +154,9 @@ export function WatchStatsPanel({ items, ratings }: {
       <p className="text-[10px] text-slate-400">Watch something first to unlock your stats.</p>
     </div>
   );
+
+  const hasPartner = !!partner;
+  const hasDualRatings = stats.myRatingCount > 0 && stats.partnerRatingCount > 0;
 
   return (
     <div className="space-y-2">
@@ -147,14 +184,42 @@ export function WatchStatsPanel({ items, ratings }: {
         </p>
       )}
       {stats.ratingCount > 0 && (
-        <div className="space-y-1">
-          <div className="flex items-center justify-center gap-2">
-            <StarRating value={stats.avgRating} readonly size="sm" />
-            <span className="text-[10px] text-slate-400">avg ({stats.ratingCount})</span>
-          </div>
-          {stats.distribution.some((d) => d.value > 0) && (
-            <MiniBarChart data={stats.distribution} />
+        <div className="space-y-2">
+          {/* Per-user averages */}
+          {hasPartner ? (
+            <div className="flex items-center justify-center gap-6">
+              {stats.myRatingCount > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <StarRating value={stats.myAvg} readonly size="sm" />
+                  <span className="text-[10px] text-slate-400">{myDisplayName} ({stats.myRatingCount})</span>
+                </div>
+              )}
+              {stats.partnerRatingCount > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <StarRating value={stats.partnerAvg} readonly size="sm" />
+                  <span className="text-[10px] text-slate-400">{partnerDisplayName} ({stats.partnerRatingCount})</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <StarRating value={stats.avgRating} readonly size="sm" />
+              <span className="text-[10px] text-slate-400">avg ({stats.ratingCount})</span>
+            </div>
           )}
+          {/* Rating distribution chart */}
+          {hasDualRatings ? (
+            <DualBarChart
+              data1={stats.myDistribution}
+              data2={stats.partnerDistribution}
+              label1={myDisplayName || 'You'}
+              label2={partnerDisplayName || 'Partner'}
+            />
+          ) : stats.myDistribution.some((d) => d.value > 0) ? (
+            <MiniBarChart data={stats.myDistribution} />
+          ) : stats.partnerDistribution.some((d) => d.value > 0) ? (
+            <MiniBarChart data={stats.partnerDistribution} />
+          ) : null}
         </div>
       )}
     </div>

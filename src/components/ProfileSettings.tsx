@@ -26,7 +26,7 @@ export default function ProfileSettings() {
     <div className="space-y-5">
       <div className="text-center space-y-1">
         <h1 className="text-2xl font-bold text-slate-800">Our Profiles</h1>
-        <p className="text-sm text-blue-600/40 italic">our little world 🦆</p>
+        <p className="text-sm text-amber-600/40 italic">our little world 🦆</p>
       </div>
 
       {/* My Profile Card */}
@@ -367,7 +367,7 @@ function NicknameEditor({
         <Heart className="w-3.5 h-3.5 text-blue-500" />
         <h3 className="text-xs font-semibold text-slate-700">Nickname for {partnerName}</h3>
       </div>
-      <p className="text-[10px] text-blue-600/40 mb-3">
+      <p className="text-[10px] text-amber-600/40 mb-3">
         Give your partner a cute nickname — this is how they&apos;ll appear throughout the app (if they allow it).
       </p>
 

@@ -345,7 +345,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters' };
 
       const cred = await createUserWithEmailAndPassword(auth, trimEmail, password);
-      await sendEmailVerification(cred.user);
+      // Fire-and-forget: don't let verification email hang the join flow
+      sendEmailVerification(cred.user).catch(() => {});
 
       const user: UserProfile = {
         id: cred.user.uid,
@@ -374,8 +375,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dates: [...prev.dates, ...starterDates],
       }));
 
-      // Mark invite as used in Firestore
-      await updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() });
+      // Fire-and-forget: don't let Firestore update hang the join flow
+      updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
 
       return { success: true };
     } catch (err: unknown) {
@@ -434,8 +435,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dates: [...prev.dates, ...starterDates],
       }));
 
-      // Mark invite as used in Firestore
-      await updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() });
+      // Fire-and-forget: don't let Firestore update hang the join flow
+      updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
 
       return { success: true };
     } catch (err: unknown) {

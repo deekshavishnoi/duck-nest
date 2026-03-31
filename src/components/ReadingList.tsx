@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
 import { ReadingTab, ReadingStatus, ReadingItem, READING_STATUS_CONFIG } from '@/types';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, X, Pencil, BookOpen, Check } from 'lucide-react';
+import { Plus, Trash2, X, Pencil, Check } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { DuckSleeping } from '@/components/ui/DuckDoodles';
 import { StarRating, ReadingProgressBar } from '@/components/ui/Charts';
 import { ReadingStatsPanel, StatsToggle, StatsDropdown } from '@/components/Statistics';
 
@@ -40,7 +41,7 @@ export default function ReadingList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Reading List</h1>
-          <p className="text-sm text-blue-600/40">{partner ? 'books & reads for two' : 'your reading corner'}</p>
+          <p className="text-sm text-amber-600/40">{partner ? 'books & reads for two' : 'your reading corner'}</p>
         </div>
         <div className="flex items-center gap-2">
           <StatsToggle open={showStats} onToggle={() => setShowStats(!showStats)} />
@@ -104,8 +105,8 @@ export default function ReadingList() {
           animate={{ opacity: 1 }}
           className="duck-card text-center py-12"
         >
-          <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm text-slate-600/60">No books yet — add your first read!</p>
+          <DuckSleeping className="mx-auto mb-3 text-amber-400/60" size={56} />
+          <p className="text-sm text-amber-600/40">No books yet — add your first read!</p>
         </motion.div>
       ) : (
         <div className="space-y-4">

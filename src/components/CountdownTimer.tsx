@@ -36,7 +36,7 @@ export default function CountdownTimer() {
             {subtitle}
           </p>
           <p className="text-2xl font-bold text-slate-800">
-            {days} <span className="text-sm font-normal text-blue-600/40">days</span>
+            {days} <span className="text-sm font-normal text-amber-600/40">days</span>
           </p>
           {months > 0 && (
             <p className="text-[10px] text-slate-400">

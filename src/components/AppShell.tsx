@@ -69,7 +69,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         >
           🦆
         </motion.div>
-        <p className="text-sm text-blue-600/40">Loading your nest...</p>
+        <p className="text-sm text-amber-600/40">Loading your nest...</p>
       </div>
     );
   }
