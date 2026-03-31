@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
 import { DATE_CATEGORY_CONFIG, DateCategory, DateIdea, ChecklistItem } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Plus, Check, Trash2, X, MapPin, Clock,
   Pencil, ExternalLink, ListChecks, CalendarHeart, ChevronDown,
@@ -258,6 +259,7 @@ function DateCard({
   onEdit: () => void;
   onToggleChecklist: (itemId: string) => void;
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const hasDetails = idea.location || idea.notes || idea.itinerary || idea.reminderNote || (idea.checklist && idea.checklist.length > 0);
   const isApproaching = idea.scheduledFor && daysUntil(idea.scheduledFor) >= 0 && daysUntil(idea.scheduledFor) <= 3;
 
@@ -327,9 +329,17 @@ function DateCard({
             <button onClick={onToggleDone} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-green-500 hover:bg-green-50 transition-colors">
               <Check className="w-4 h-4" />
             </button>
-            <button onClick={onDelete} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
+            <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
               <Trash2 className="w-4 h-4" />
             </button>
+            <ConfirmDialog
+              open={confirmDelete}
+              title="Delete date idea?"
+              message={`Remove "${idea.title}"? This can't be undone.`}
+              confirmLabel="Delete"
+              onConfirm={onDelete}
+              onCancel={() => setConfirmDelete(false)}
+            />
           </div>
         </div>
       </div>

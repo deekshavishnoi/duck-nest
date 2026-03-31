@@ -174,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const partner = useMemo(
-    () => data.users.find((u) => u.id !== data.currentUserId) ?? null,
+    () => data.currentUserId ? data.users.find((u) => u.id !== data.currentUserId) ?? null : null,
     [data.users, data.currentUserId]
   );
 
@@ -446,6 +446,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const generateInviteCode = (): string => {
+    // Re-use existing code if already generated and not used
+    if (data.invite.code && !data.invite.partnerJoined) {
+      return data.invite.code;
+    }
     const code = uuidv4().slice(0, 8).toUpperCase();
     setData((prev) => ({ ...prev, invite: { ...prev.invite, code } }));
     // Persist invite to Firestore so partner can validate from their device
@@ -456,7 +460,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         creatorEmail: firebaseUser.email ?? '',
         createdAt: serverTimestamp(),
         used: false,
-      }).catch((err) => console.error('Failed to save invite to Firestore:', err));
+      }).catch(() => {
+        // Firestore write failed — code still works locally but won't work cross-device
+      });
     }
     return code;
   };

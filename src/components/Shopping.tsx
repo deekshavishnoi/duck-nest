@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import {
   Plus, Trash2, Check, X, Pencil,
 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const TAB_KEYS: ShoppingTab[] = ['user1', 'user2', 'together'];
 const TAB_EMOJI: Record<ShoppingTab, string> = { user1: '🐥', user2: '🐤', together: '🦆' };
@@ -136,6 +137,7 @@ function ShoppingListCard({
   onRemoveItem: (itemId: string) => void;
 }) {
   const [newItem, setNewItem] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [editTitle, setEditTitle] = useState(list.title);
@@ -213,11 +215,19 @@ function ShoppingListCard({
                   <button onClick={onStartEdit} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-400 hover:bg-blue-50 transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={onDelete} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
+                  <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
+
+              <ConfirmDialog
+                open={confirmDelete}
+                title="Delete this list?"
+                message={`"${list.title}" and all its items will be removed.`}
+                onConfirm={() => { setConfirmDelete(false); onDelete(); }}
+                onCancel={() => setConfirmDelete(false)}
+              />
             </>
           )}
         </div>

@@ -6,6 +6,7 @@ import { useApp } from '@/hooks/useAppData';
 import { ReadingTab, ReadingStatus, ReadingItem, READING_STATUS_CONFIG } from '@/types';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, X, Pencil, BookOpen, Check } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StarRating, ReadingProgressBar } from '@/components/ui/Charts';
 import { ReadingStatsPanel, StatsToggle, StatsDropdown } from '@/components/Statistics';
 
@@ -271,6 +272,7 @@ function BookCard({
   myRating: { rating: number; review?: string } | null;
   partnerRating: { rating: number; review?: string } | null;
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [title, setTitle] = useState(book.title);
   const [author, setAuthor] = useState(book.author);
   const [status, setStatus] = useState(book.status);
@@ -347,9 +349,17 @@ function BookCard({
             <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-blue-100 text-slate-400 hover:text-blue-600 transition-colors">
               <Pencil className="w-3.5 h-3.5" />
             </button>
-            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+            <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
+            <ConfirmDialog
+              open={confirmDelete}
+              title="Delete book?"
+              message={`Remove "${book.title}"? This can't be undone.`}
+              confirmLabel="Delete"
+              onConfirm={onDelete}
+              onCancel={() => setConfirmDelete(false)}
+            />
           </div>
         )}
       </div>

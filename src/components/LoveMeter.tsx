@@ -38,7 +38,7 @@ export default function LoveMeter() {
 
   const nestTitle = partner
     ? `${myDisplayName} & ${partnerDisplayName}'s Nest`
-    : `${myDisplayName || 'Your'}'s Nest`;
+    : `${myDisplayName ? `${myDisplayName}'s Nest` : 'Your Cozy Nest'}`;
 
   const boostLove = () => {
     const boost = randomBetween(1, 10);

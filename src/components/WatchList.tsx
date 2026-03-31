@@ -6,6 +6,7 @@ import { useApp } from '@/hooks/useAppData';
 import { WatchType, WatchStatus, WatchItem, WATCH_TYPE_CONFIG, WATCH_STATUS_CONFIG } from '@/types';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, X, Pencil, Tv, Check } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StarRating } from '@/components/ui/Charts';
 import { WatchStatsPanel, StatsToggle, StatsDropdown } from '@/components/Statistics';
 
@@ -253,6 +254,7 @@ function WatchCard({
   myRating: { rating: number; review?: string } | null;
   partnerRating: { rating: number; review?: string } | null;
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [title, setTitle] = useState(item.title);
   const [type, setType] = useState(item.type);
   const [status, setStatus] = useState(item.status);
@@ -340,9 +342,17 @@ function WatchCard({
           <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-blue-100 text-slate-400 hover:text-blue-600 transition-colors">
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+          <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+          <ConfirmDialog
+            open={confirmDelete}
+            title="Delete from watchlist?"
+            message={`Remove "${item.title}"? This can't be undone.`}
+            confirmLabel="Delete"
+            onConfirm={onDelete}
+            onCancel={() => setConfirmDelete(false)}
+          />
         </div>
       </div>
 

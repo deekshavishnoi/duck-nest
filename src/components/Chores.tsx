@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
 import { ChoreTab, Difficulty, Chore, DIFFICULTY_CONFIG } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, formatDateShort } from '@/lib/utils';
 import {
   Plus, Trash2, Check, X, Calendar, ChevronDown, ChevronUp, Heart,
 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const TAB_KEYS: ChoreTab[] = ['user1', 'user2', 'together'];
 const TAB_EMOJI: Record<ChoreTab, string> = { user1: '🐥', user2: '🐤', together: '🦆' };
@@ -162,6 +163,7 @@ function ChoreCard({
   onToggleSubTask: (subId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const diff = DIFFICULTY_CONFIG[chore.difficulty];
   const subDone = chore.subtasks.filter((s) => s.checked).length;
   const isOverdue = chore.deadline && new Date(chore.deadline) < new Date() && !chore.completed;
@@ -202,7 +204,7 @@ function ChoreCard({
                     isOverdue ? 'text-red-400' : 'text-slate-400'
                   )}>
                     <Calendar className="w-3 h-3" />
-                    {new Date(chore.deadline).toLocaleDateString('en-DE', { day: 'numeric', month: 'short' })}
+                    {formatDateShort(chore.deadline)}
                     {isOverdue && ' (overdue!)'}
                   </span>
                 )}
@@ -219,12 +221,20 @@ function ChoreCard({
               </button>
             )}
             {editable && (
-              <button onClick={onDelete} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
+              <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
+
+        <ConfirmDialog
+          open={confirmDelete}
+          title="Delete this chore?"
+          message={`"${chore.title}" will be removed permanently.`}
+          onConfirm={() => { setConfirmDelete(false); onDelete(); }}
+          onCancel={() => setConfirmDelete(false)}
+        />
 
         {/* Sub-tasks progress */}
         {chore.subtasks.length > 0 && (
