@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Heart, CalendarHeart, Camera, ShoppingCart, ListChecks, User,
-  BookOpen, Tv, Menu, X,
+  BookOpen, Tv, Menu, X, BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/chores', label: 'Chores', icon: ListChecks },
   { href: '/reading', label: 'Reading', icon: BookOpen },
   { href: '/watchlist', label: 'Watch', icon: Tv },
+  { href: '/stats', label: 'Stats', icon: BarChart3 },
   { href: '/profile', label: 'Us', icon: User },
 ];
 

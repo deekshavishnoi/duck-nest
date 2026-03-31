@@ -1,16 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import {
   AppData, DateIdea, CoupleConfig,
   PersonMoodEntry, UserProfile, ShoppingList,
   Difficulty, DIFFICULTY_CONFIG, ShoppingTab, ChoreTab,
   ShoppingCategory, ReadingItem, ReadingStatus, ReadingTab,
-  WatchItem, WatchType, WatchStatus,
+  WatchItem, WatchType, WatchStatus, ItemRating,
 } from '@/types';
 import { DEFAULT_APP_DATA, STARTER_DATES } from '@/lib/seed-data';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 
 // ----- Permission helpers -----
 type TabOwner = 'user1' | 'user2' | 'together';
@@ -74,13 +75,18 @@ interface AppContextType {
   toggleChoreComplete: (id: string) => void;
   toggleSubTask: (choreId: string, subTaskId: string) => void;
   // Reading
-  addReadingItem: (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab }) => void;
+  addReadingItem: (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab; totalPages?: number }) => void;
   updateReadingItem: (id: string, updates: Partial<ReadingItem>) => void;
   deleteReadingItem: (id: string) => void;
+  updateReadingProgress: (id: string, currentPage: number) => void;
   // Watch List
   addWatchItem: (item: { title: string; type: WatchType; status: WatchStatus; notes?: string }) => void;
   updateWatchItem: (id: string, updates: Partial<WatchItem>) => void;
   deleteWatchItem: (id: string) => void;
+  // Ratings (per-user)
+  rateItem: (itemId: string, rating: number, review?: string) => void;
+  getMyRating: (itemId: string) => ItemRating | null;
+  getPartnerRating: (itemId: string) => ItemRating | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -127,12 +133,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const trimEmail = email.trim().toLowerCase();
     const user = data.users.find((u) => u.email === trimEmail);
     if (!user) return { success: false, error: 'No account found with this email' };
-    // In a real app, compare hashed passwords. For localStorage demo, we store
-    // a simple check. Since we don't store passwords in UserProfile for security,
-    // we use a separate passwords store.
     const passwords = JSON.parse(localStorage.getItem('duckspace-passwords') || '{}');
-    if (passwords[user.id] !== password) {
-      return { success: false, error: 'Incorrect password' };
+    const stored = passwords[user.id];
+    if (!stored) return { success: false, error: 'Incorrect password' };
+    // Support both legacy plain-text and new bcrypt hashes
+    const isHash = typeof stored === 'string' && stored.startsWith('$2');
+    const match = isHash ? bcrypt.compareSync(password, stored) : stored === password;
+    if (!match) return { success: false, error: 'Incorrect password' };
+    // Migrate legacy plain-text password to hash on successful login
+    if (!isHash) {
+      passwords[user.id] = bcrypt.hashSync(password, 10);
+      localStorage.setItem('duckspace-passwords', JSON.stringify(passwords));
     }
     setData((prev) => ({ ...prev, currentUserId: user.id }));
     return { success: true };
@@ -152,16 +163,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Check all duckspace password stores for duplicate emails
     const existingUsers = data.users;
     if (existingUsers.some((u) => u.email === trimEmail)) {
-      return { success: false, error: 'An account with this email already exists' };
+      return { success: false, error: 'This email is already registered' };
     }
     if (existingUsers.length >= 2) {
       return { success: false, error: 'This space already has two members' };
     }
 
     const userId = uuidv4();
-    // Store password separately (in a real app this would be hashed on server)
+    // Hash password with bcrypt before storing
+    const hash = bcrypt.hashSync(password, 10);
     const passwords = JSON.parse(localStorage.getItem('duckspace-passwords') || '{}');
-    passwords[userId] = password;
+    passwords[userId] = hash;
     localStorage.setItem('duckspace-passwords', JSON.stringify(passwords));
 
     return { success: true, userId };
@@ -514,11 +526,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // ----- Reading List -----
-  const addReadingItem = (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab }) => {
+  const addReadingItem = (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab; totalPages?: number }) => {
     if (!canEdit(myRole, item.tab)) return;
+    const now = new Date().toISOString();
     setData((prev) => ({
       ...prev,
-      reading: [...prev.reading, { ...item, id: uuidv4(), createdAt: new Date().toISOString() }],
+      reading: [...prev.reading, {
+        ...item,
+        id: uuidv4(),
+        currentPage: 0,
+        startedAt: item.status === 'reading' ? now : undefined,
+        finishedAt: item.status === 'finished' ? now : undefined,
+        createdAt: now,
+      }],
     }));
   };
 
@@ -526,24 +546,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => {
       const item = prev.reading.find((r) => r.id === id);
       if (!item || !canEdit(myRole, item.tab)) return prev;
-      return { ...prev, reading: prev.reading.map((r) => (r.id === id ? { ...r, ...updates } : r)) };
+      const merged = { ...item, ...updates };
+      // Auto-set timestamps based on status changes
+      if (updates.status === 'reading' && !item.startedAt) merged.startedAt = new Date().toISOString();
+      if (updates.status === 'finished' && !item.finishedAt) merged.finishedAt = new Date().toISOString();
+      // Auto-complete if currentPage >= totalPages
+      if (merged.totalPages && merged.currentPage && merged.currentPage >= merged.totalPages) {
+        merged.status = 'finished';
+        if (!merged.finishedAt) merged.finishedAt = new Date().toISOString();
+      }
+      return { ...prev, reading: prev.reading.map((r) => (r.id === id ? merged : r)) };
     });
+  };
+
+  const updateReadingProgress = (id: string, currentPage: number) => {
+    updateReadingItem(id, { currentPage: Math.max(0, currentPage), status: 'reading' });
   };
 
   const deleteReadingItem = (id: string) => {
     setData((prev) => {
       const item = prev.reading.find((r) => r.id === id);
       if (!item || !canEdit(myRole, item.tab)) return prev;
-      return { ...prev, reading: prev.reading.filter((r) => r.id !== id) };
+      // Also clean up ratings for this item
+      const newRatings = { ...prev.ratings };
+      Object.keys(newRatings).forEach((key) => {
+        if (key.startsWith(id + ':')) delete newRatings[key];
+      });
+      return { ...prev, reading: prev.reading.filter((r) => r.id !== id), ratings: newRatings };
     });
   };
 
   // ----- Watch List -----
   const addWatchItem = (item: { title: string; type: WatchType; status: WatchStatus; notes?: string }) => {
     if (!currentUser) return;
+    const now = new Date().toISOString();
     setData((prev) => ({
       ...prev,
-      watchList: [...prev.watchList, { ...item, id: uuidv4(), createdAt: new Date().toISOString() }],
+      watchList: [...prev.watchList, {
+        ...item,
+        id: uuidv4(),
+        watchedAt: item.status === 'watched' ? now : undefined,
+        createdAt: now,
+      }],
     }));
   };
 
@@ -551,17 +595,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return;
     setData((prev) => ({
       ...prev,
-      watchList: prev.watchList.map((w) => (w.id === id ? { ...w, ...updates } : w)),
+      watchList: prev.watchList.map((w) => {
+        if (w.id !== id) return w;
+        const merged = { ...w, ...updates };
+        if (updates.status === 'watched' && !w.watchedAt) merged.watchedAt = new Date().toISOString();
+        return merged;
+      }),
     }));
   };
 
   const deleteWatchItem = (id: string) => {
     if (!currentUser) return;
+    setData((prev) => {
+      const newRatings = { ...prev.ratings };
+      Object.keys(newRatings).forEach((key) => {
+        if (key.startsWith(id + ':')) delete newRatings[key];
+      });
+      return { ...prev, watchList: prev.watchList.filter((w) => w.id !== id), ratings: newRatings };
+    });
+  };
+
+  // ----- Ratings (individual per-user) -----
+  const rateItem = useCallback((itemId: string, rating: number, review?: string) => {
+    if (!currentUser) return;
+    const key = `${itemId}:${currentUser.id}`;
     setData((prev) => ({
       ...prev,
-      watchList: prev.watchList.filter((w) => w.id !== id),
+      ratings: {
+        ...prev.ratings,
+        [key]: { rating: Math.max(0, Math.min(5, rating)), review: review || undefined, ratedAt: new Date().toISOString() },
+      },
     }));
-  };
+  }, [currentUser, setData]);
+
+  const getMyRating = useCallback((itemId: string): ItemRating | null => {
+    if (!currentUser) return null;
+    return data.ratings?.[`${itemId}:${currentUser.id}`] ?? null;
+  }, [currentUser, data.ratings]);
+
+  const getPartnerRating = useCallback((itemId: string): ItemRating | null => {
+    if (!partner) return null;
+    return data.ratings?.[`${itemId}:${partner.id}`] ?? null;
+  }, [partner, data.ratings]);
 
   return (
     <AppContext.Provider
@@ -592,8 +667,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addShoppingList, updateShoppingList, deleteShoppingList,
         addShoppingItem, toggleShoppingItem, updateShoppingItem, removeShoppingItem,
         addChore, deleteChore, toggleChoreComplete, toggleSubTask,
-        addReadingItem, updateReadingItem, deleteReadingItem,
+        addReadingItem, updateReadingItem, deleteReadingItem, updateReadingProgress,
         addWatchItem, updateWatchItem, deleteWatchItem,
+        rateItem, getMyRating, getPartnerRating,
       }}
     >
       {children}

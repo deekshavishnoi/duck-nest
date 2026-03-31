@@ -6,6 +6,7 @@ import { useApp } from '@/hooks/useAppData';
 import { ReadingTab, ReadingStatus, ReadingItem, READING_STATUS_CONFIG } from '@/types';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, X, Pencil, BookOpen, Check } from 'lucide-react';
+import { StarRating, ReadingProgressBar } from '@/components/ui/Charts';
 
 const TAB_KEYS: ReadingTab[] = ['user1', 'user2'];
 const TAB_EMOJI: Record<ReadingTab, string> = { user1: '🐥', user2: '🐤' };
@@ -13,7 +14,8 @@ const STATUS_KEYS: ReadingStatus[] = ['want-to-read', 'reading', 'finished'];
 
 export default function ReadingList() {
   const {
-    data, canEditTab, getTabLabel, addReadingItem, updateReadingItem, deleteReadingItem, partner,
+    data, canEditTab, getTabLabel, addReadingItem, updateReadingItem, deleteReadingItem,
+    updateReadingProgress, rateItem, getMyRating, getPartnerRating, partner,
   } = useApp();
   const [activeTab, setActiveTab] = useState<ReadingTab>('user1');
   const [showAdd, setShowAdd] = useState(false);
@@ -22,7 +24,6 @@ export default function ReadingList() {
   const items = (data.reading ?? []).filter((r) => r.tab === activeTab);
   const editable = canEditTab(activeTab);
 
-  // Group by status
   const grouped: Record<ReadingStatus, ReadingItem[]> = {
     'want-to-read': items.filter((i) => i.status === 'want-to-read'),
     reading: items.filter((i) => i.status === 'reading'),
@@ -120,6 +121,10 @@ export default function ReadingList() {
                         onCancelEdit={() => setEditingId(null)}
                         onUpdate={(updates) => { updateReadingItem(book.id, updates); setEditingId(null); }}
                         onDelete={() => deleteReadingItem(book.id)}
+                        onProgressUpdate={(page) => updateReadingProgress(book.id, page)}
+                        onRate={(rating, review) => rateItem(book.id, rating, review)}
+                        myRating={getMyRating(book.id)}
+                        partnerRating={getPartnerRating(book.id)}
                       />
                     ))}
                   </AnimatePresence>
@@ -140,18 +145,23 @@ function AddBookForm({
   onCancel,
 }: {
   tab: ReadingTab;
-  onAdd: (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab }) => void;
+  onAdd: (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab; totalPages?: number }) => void;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [status, setStatus] = useState<ReadingStatus>('want-to-read');
   const [notes, setNotes] = useState('');
+  const [totalPages, setTotalPages] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    onAdd({ title: title.trim(), author: author.trim(), status, notes: notes.trim() || undefined, tab });
+    onAdd({
+      title: title.trim(), author: author.trim(), status,
+      notes: notes.trim() || undefined, tab,
+      totalPages: totalPages ? parseInt(totalPages) : undefined,
+    });
   };
 
   return (
@@ -180,6 +190,14 @@ function AddBookForm({
         placeholder="Author"
         value={author}
         onChange={(e) => setAuthor(e.target.value)}
+      />
+      <input
+        className="duck-input w-full"
+        placeholder="Total pages (optional)"
+        type="number"
+        min="1"
+        value={totalPages}
+        onChange={(e) => setTotalPages(e.target.value)}
       />
       <div className="flex gap-2">
         {STATUS_KEYS.map((s) => {
@@ -226,6 +244,10 @@ function BookCard({
   onCancelEdit,
   onUpdate,
   onDelete,
+  onProgressUpdate,
+  onRate,
+  myRating,
+  partnerRating,
 }: {
   book: ReadingItem;
   editable: boolean;
@@ -234,17 +256,27 @@ function BookCard({
   onCancelEdit: () => void;
   onUpdate: (updates: Partial<ReadingItem>) => void;
   onDelete: () => void;
+  onProgressUpdate: (page: number) => void;
+  onRate: (rating: number, review?: string) => void;
+  myRating: { rating: number; review?: string } | null;
+  partnerRating: { rating: number; review?: string } | null;
 }) {
   const [title, setTitle] = useState(book.title);
   const [author, setAuthor] = useState(book.author);
   const [status, setStatus] = useState(book.status);
   const [notes, setNotes] = useState(book.notes || '');
+  const [totalPages, setTotalPages] = useState(String(book.totalPages || ''));
+  const [pageInput, setPageInput] = useState(String(book.currentPage || 0));
+  const [showReview, setShowReview] = useState(false);
+  const [reviewText, setReviewText] = useState(myRating?.review || '');
 
   if (isEditing) {
     return (
       <motion.div layout className="duck-card space-y-3">
         <input className="duck-input w-full" value={title} onChange={(e) => setTitle(e.target.value)} />
         <input className="duck-input w-full" value={author} onChange={(e) => setAuthor(e.target.value)} />
+        <input className="duck-input w-full" placeholder="Total pages" type="number" min="1" value={totalPages}
+          onChange={(e) => setTotalPages(e.target.value)} />
         <div className="flex gap-2">
           {STATUS_KEYS.map((s) => {
             const cfg = READING_STATUS_CONFIG[s];
@@ -265,7 +297,10 @@ function BookCard({
         </div>
         <textarea className="duck-input w-full resize-none" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
         <div className="flex gap-2">
-          <button onClick={() => onUpdate({ title: title.trim(), author: author.trim(), status, notes: notes.trim() || undefined })} className="duck-btn flex-1 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1">
+          <button onClick={() => onUpdate({
+            title: title.trim(), author: author.trim(), status, notes: notes.trim() || undefined,
+            totalPages: totalPages ? parseInt(totalPages) : undefined,
+          })} className="duck-btn flex-1 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1">
             <Check className="w-3 h-3" /> Save
           </button>
           <button onClick={onCancelEdit} className="duck-btn-soft flex-1 py-1.5 rounded-lg text-xs">Cancel</button>
@@ -275,6 +310,8 @@ function BookCard({
   }
 
   const cfg = READING_STATUS_CONFIG[book.status];
+  const isReading = book.status === 'reading';
+  const isFinished = book.status === 'finished';
 
   return (
     <motion.div
@@ -286,7 +323,7 @@ function BookCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
             <h4 className="text-sm font-semibold text-amber-900 truncate">{book.title}</h4>
             <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap', cfg.color)}>
               {cfg.emoji} {cfg.label}
@@ -306,6 +343,67 @@ function BookCard({
           </div>
         )}
       </div>
+
+      {/* Progress bar for books with totalPages */}
+      {(isReading || isFinished) && book.totalPages ? (
+        <ReadingProgressBar currentPage={book.currentPage || 0} totalPages={book.totalPages} compact />
+      ) : null}
+
+      {/* Progress update input */}
+      {isReading && editable && book.totalPages ? (
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-[10px] text-amber-600/60">Page:</span>
+          <input
+            type="number" min="0" max={book.totalPages}
+            className="duck-input w-20 text-xs text-center py-1"
+            value={pageInput}
+            onChange={(e) => setPageInput(e.target.value)}
+            onBlur={() => {
+              const val = Math.min(Math.max(0, parseInt(pageInput) || 0), book.totalPages || 9999);
+              setPageInput(String(val));
+              onProgressUpdate(val);
+            }}
+            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          />
+          <span className="text-[10px] text-amber-500/50">/ {book.totalPages}</span>
+        </div>
+      ) : null}
+
+      {/* Rating section for finished books */}
+      {isFinished && (
+        <div className="mt-2 pt-2 border-t border-amber-100 space-y-1.5">
+          {editable ? (
+            <>
+              <StarRating value={myRating?.rating || 0} onChange={(r) => onRate(r, reviewText || undefined)} label="Your rating" />
+              {myRating && myRating.rating > 0 && (
+                <button onClick={() => setShowReview(!showReview)}
+                  className="text-[10px] text-amber-500 hover:text-amber-700 transition-colors">
+                  {showReview ? 'Hide review' : (myRating.review ? 'Edit review' : '+ Add review')}
+                </button>
+              )}
+              {showReview && (
+                <div className="space-y-1.5">
+                  <textarea className="duck-input w-full resize-none text-xs" rows={2} placeholder="Write a short review..."
+                    value={reviewText} onChange={(e) => setReviewText(e.target.value)} />
+                  <button onClick={() => { onRate(myRating?.rating || 0, reviewText.trim() || undefined); setShowReview(false); }}
+                    className="duck-btn-soft text-[10px] px-3 py-1 rounded-lg">Save review</button>
+                </div>
+              )}
+            </>
+          ) : (
+            myRating && <StarRating value={myRating.rating} readonly size="sm" label="Their rating" />
+          )}
+          {partnerRating && partnerRating.rating > 0 && (
+            <div className="mt-1">
+              <StarRating value={partnerRating.rating} readonly size="sm" label="Partner" />
+              {partnerRating.review && <p className="text-[10px] text-amber-600/50 mt-0.5 italic">&quot;{partnerRating.review}&quot;</p>}
+            </div>
+          )}
+          {myRating?.review && !showReview && editable && (
+            <p className="text-[10px] text-amber-600/50 italic">&quot;{myRating.review}&quot;</p>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }

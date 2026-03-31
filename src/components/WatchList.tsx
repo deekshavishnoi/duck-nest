@@ -6,6 +6,7 @@ import { useApp } from '@/hooks/useAppData';
 import { WatchType, WatchStatus, WatchItem, WATCH_TYPE_CONFIG, WATCH_STATUS_CONFIG } from '@/types';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, X, Pencil, Tv, Check } from 'lucide-react';
+import { StarRating } from '@/components/ui/Charts';
 
 const TYPE_KEYS: WatchType[] = ['movie', 'series', 'documentary'];
 const STATUS_KEYS: WatchStatus[] = ['want-to-watch', 'watching', 'watched'];
@@ -13,6 +14,7 @@ const STATUS_KEYS: WatchStatus[] = ['want-to-watch', 'watching', 'watched'];
 export default function WatchList() {
   const {
     data, addWatchItem, updateWatchItem, deleteWatchItem, partner, isLoggedIn,
+    rateItem, getMyRating, getPartnerRating,
   } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -88,6 +90,9 @@ export default function WatchList() {
                 onCancelEdit={() => setEditingId(null)}
                 onUpdate={(updates) => { updateWatchItem(item.id, updates); setEditingId(null); }}
                 onDelete={() => deleteWatchItem(item.id)}
+                onRate={(rating, review) => rateItem(item.id, rating, review)}
+                myRating={getMyRating(item.id)}
+                partnerRating={getPartnerRating(item.id)}
               />
             ))}
           </AnimatePresence>
@@ -225,6 +230,9 @@ function WatchCard({
   onCancelEdit,
   onUpdate,
   onDelete,
+  onRate,
+  myRating,
+  partnerRating,
 }: {
   item: WatchItem;
   isEditing: boolean;
@@ -232,11 +240,16 @@ function WatchCard({
   onCancelEdit: () => void;
   onUpdate: (updates: Partial<WatchItem>) => void;
   onDelete: () => void;
+  onRate: (rating: number, review?: string) => void;
+  myRating: { rating: number; review?: string } | null;
+  partnerRating: { rating: number; review?: string } | null;
 }) {
   const [title, setTitle] = useState(item.title);
   const [type, setType] = useState(item.type);
   const [status, setStatus] = useState(item.status);
   const [notes, setNotes] = useState(item.notes || '');
+  const [showReview, setShowReview] = useState(false);
+  const [reviewText, setReviewText] = useState(myRating?.review || '');
 
   if (isEditing) {
     return (
@@ -291,6 +304,7 @@ function WatchCard({
 
   const typeCfg = WATCH_TYPE_CONFIG[item.type];
   const statusCfg = WATCH_STATUS_CONFIG[item.status];
+  const isWatched = item.status === 'watched';
 
   return (
     <motion.div
@@ -322,6 +336,36 @@ function WatchCard({
           </button>
         </div>
       </div>
+
+      {/* Rating section for watched items */}
+      {isWatched && (
+        <div className="mt-2 pt-2 border-t border-amber-100 space-y-1.5">
+          <StarRating value={myRating?.rating || 0} onChange={(r) => onRate(r, reviewText || undefined)} label="Your rating" />
+          {myRating && myRating.rating > 0 && (
+            <button onClick={() => setShowReview(!showReview)}
+              className="text-[10px] text-amber-500 hover:text-amber-700 transition-colors">
+              {showReview ? 'Hide review' : (myRating.review ? 'Edit review' : '+ Add review')}
+            </button>
+          )}
+          {showReview && (
+            <div className="space-y-1.5">
+              <textarea className="duck-input w-full resize-none text-xs" rows={2} placeholder="Write a short review..."
+                value={reviewText} onChange={(e) => setReviewText(e.target.value)} />
+              <button onClick={() => { onRate(myRating?.rating || 0, reviewText.trim() || undefined); setShowReview(false); }}
+                className="duck-btn-soft text-[10px] px-3 py-1 rounded-lg">Save review</button>
+            </div>
+          )}
+          {myRating?.review && !showReview && (
+            <p className="text-[10px] text-amber-600/50 italic">&quot;{myRating.review}&quot;</p>
+          )}
+          {partnerRating && partnerRating.rating > 0 && (
+            <div className="mt-1">
+              <StarRating value={partnerRating.rating} readonly size="sm" label="Partner" />
+              {partnerRating.review && <p className="text-[10px] text-amber-600/50 mt-0.5 italic">&quot;{partnerRating.review}&quot;</p>}
+            </div>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }

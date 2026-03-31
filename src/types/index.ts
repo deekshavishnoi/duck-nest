@@ -31,6 +31,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  emailVerified?: boolean;
   avatarUrl?: string;
   birthDate?: string;
   displayName?: string;
@@ -159,7 +160,18 @@ export interface ReadingItem {
   status: ReadingStatus;
   notes?: string;
   tab: ReadingTab;
+  totalPages?: number;
+  currentPage?: number;
+  startedAt?: string;
+  finishedAt?: string;
   createdAt: string;
+}
+
+// Per-user rating for a reading item (keyed by userId)
+export interface ItemRating {
+  rating: number; // 0–5, supports half-stars (e.g. 3.5)
+  review?: string;
+  ratedAt: string;
 }
 
 export const READING_STATUS_CONFIG: Record<ReadingStatus, { label: string; emoji: string; color: string }> = {
@@ -179,6 +191,7 @@ export interface WatchItem {
   type: WatchType;
   status: WatchStatus;
   notes?: string;
+  watchedAt?: string;
   createdAt: string;
 }
 
@@ -221,6 +234,11 @@ export interface Scores {
   together: number;
 }
 
+// ----- Ratings (per-user, per-item) -----
+
+// Key format: `${itemId}:${userId}` → ItemRating
+export type RatingsMap = Record<string, ItemRating>;
+
 // ----- App Data (one shared space) -----
 
 export interface AppData {
@@ -236,5 +254,6 @@ export interface AppData {
   chores: Chore[];
   reading: ReadingItem[];
   watchList: WatchItem[];
+  ratings: RatingsMap;
   scores: Scores;
 }
