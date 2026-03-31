@@ -86,7 +86,10 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [data, setData, isLoaded] = useLocalStorage<AppData>('duckspace-data-v1', DEFAULT_APP_DATA);
+  const [rawData, setData, isLoaded] = useLocalStorage<AppData>('duckspace-data-v1', DEFAULT_APP_DATA);
+
+  // Merge with defaults so newly added fields are always present
+  const data: AppData = useMemo(() => ({ ...DEFAULT_APP_DATA, ...rawData }), [rawData]);
 
   const currentUser = useMemo(
     () => data.users.find((u) => u.id === data.currentUserId) ?? null,
