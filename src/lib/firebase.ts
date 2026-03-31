@@ -12,6 +12,15 @@ import {
   type User,
   type Auth,
 } from 'firebase/auth';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  type Firestore,
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -25,16 +34,19 @@ const firebaseConfig = {
 // Only initialize Firebase when API key is present (skip during SSG/SSR without env vars)
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
+let db: Firestore | null = null;
 
 if (firebaseConfig.apiKey) {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   auth = getAuth(app);
+  db = getFirestore(app);
 }
 
 const googleProvider = new GoogleAuthProvider();
 
 export {
   auth,
+  db,
   googleProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
@@ -43,5 +55,10 @@ export {
   sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
   type User,
 };

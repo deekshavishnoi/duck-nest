@@ -69,7 +69,7 @@ export default function WatchList() {
       <AnimatePresence>
         {showAdd && (
           <AddWatchForm
-            onAdd={(item) => { addWatchItem(item); setShowAdd(false); }}
+            onAdd={(item) => { try { addWatchItem(item); setShowAdd(false); } catch (e) { console.error('Failed to add watch item:', e); } }}
             onCancel={() => setShowAdd(false)}
           />
         )}

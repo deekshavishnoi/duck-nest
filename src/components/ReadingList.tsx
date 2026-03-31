@@ -90,7 +90,7 @@ export default function ReadingList() {
         {showAdd && editable && (
           <AddBookForm
             tab={activeTab}
-            onAdd={(item) => { addReadingItem(item); setShowAdd(false); }}
+            onAdd={(item) => { try { addReadingItem(item); setShowAdd(false); } catch (e) { console.error('Failed to add book:', e); } }}
             onCancel={() => setShowAdd(false)}
           />
         )}

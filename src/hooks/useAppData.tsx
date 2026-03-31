@@ -13,6 +13,7 @@ import { DEFAULT_APP_DATA, STARTER_DATES } from '@/lib/seed-data';
 import { v4 as uuidv4 } from 'uuid';
 import {
   auth,
+  db,
   googleProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
@@ -21,6 +22,11 @@ import {
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
   type User as FirebaseUser,
 } from '@/lib/firebase';
 
@@ -112,6 +118,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [rawData, setData, isLoaded] = useLocalStorage<AppData>('duckspace-data-v1', DEFAULT_APP_DATA);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+
+  // Migrate stored data: ensure all fields from DEFAULT_APP_DATA exist
+  // This prevents crashes when setData callbacks spread newly-added arrays (e.g. prev.reading)
+  useEffect(() => {
+    if (!isLoaded) return;
+    setData((prev) => {
+      let needsMigration = false;
+      for (const key of Object.keys(DEFAULT_APP_DATA)) {
+        if (prev[key as keyof AppData] === undefined) {
+          needsMigration = true;
+          break;
+        }
+      }
+      if (!needsMigration) return prev;
+      return { ...DEFAULT_APP_DATA, ...prev };
+    });
+  }, [isLoaded, setData]);
 
   // Listen to Firebase auth state
   useEffect(() => {
@@ -299,25 +322,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const joinWithInvite = async (code: string, name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    if (!auth) return { success: false, error: 'Firebase not configured' };
-    if (!data.invite.code || data.invite.code !== code.trim().toUpperCase()) {
-      return { success: false, error: 'Invalid invite code' };
-    }
-    if (data.invite.partnerJoined) {
-      return { success: false, error: 'A partner has already joined this space' };
-    }
-    if (data.users.length >= 2) {
-      return { success: false, error: 'This space already has two members' };
-    }
+    if (!auth || !db) return { success: false, error: 'Firebase not configured' };
+    const trimCode = code.trim().toUpperCase();
+    if (!trimCode) return { success: false, error: 'Please enter an invite code' };
 
-    const trimEmail = email.trim().toLowerCase();
-    const trimName = name.trim();
-    if (!trimName) return { success: false, error: 'Name is required' };
-    if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) return { success: false, error: 'Valid email is required' };
-    if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters' };
-    if (data.users.some((u) => u.email === trimEmail)) return { success: false, error: 'This email is already registered' };
-
+    // Validate invite code from Firestore (works cross-device)
     try {
+      const inviteRef = doc(db, 'invites', trimCode);
+      const inviteSnap = await getDoc(inviteRef);
+      if (!inviteSnap.exists()) {
+        return { success: false, error: 'Invalid invite code. Please check and try again.' };
+      }
+      const inviteData = inviteSnap.data();
+      if (inviteData.used) {
+        return { success: false, error: 'This invite code has already been used' };
+      }
+
+      const trimEmail = email.trim().toLowerCase();
+      const trimName = name.trim();
+      if (!trimName) return { success: false, error: 'Name is required' };
+      if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) return { success: false, error: 'Valid email is required' };
+      if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters' };
+
       const cred = await createUserWithEmailAndPassword(auth, trimEmail, password);
       await sendEmailVerification(cred.user);
 
@@ -341,40 +367,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setData((prev) => ({
         ...prev,
         currentUserId: cred.user.uid,
-        users: [...prev.users, user],
+        users: [...prev.users.filter((u) => u.id !== cred.user.uid), user],
         onboardingComplete: true,
         couple: { ...prev.couple, person2: trimName },
-        invite: { ...prev.invite, partnerJoined: true },
+        invite: { code: trimCode, partnerJoined: true },
         dates: [...prev.dates, ...starterDates],
       }));
 
+      // Mark invite as used in Firestore
+      await updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() });
+
       return { success: true };
     } catch (err: unknown) {
-      const code = (err as { code?: string }).code ?? '';
-      return { success: false, error: firebaseErrorMessage(code) };
+      const firebaseCode = (err as { code?: string }).code ?? '';
+      if (firebaseCode) return { success: false, error: firebaseErrorMessage(firebaseCode) };
+      return { success: false, error: 'Something went wrong. Please try again.' };
     }
   };
 
   const joinWithInviteGoogle = async (code: string): Promise<{ success: boolean; error?: string }> => {
-    if (!auth) return { success: false, error: 'Firebase not configured' };
-    if (!data.invite.code || data.invite.code !== code.trim().toUpperCase()) {
-      return { success: false, error: 'Invalid invite code' };
-    }
-    if (data.invite.partnerJoined) {
-      return { success: false, error: 'A partner has already joined this space' };
-    }
-    if (data.users.length >= 2) {
-      return { success: false, error: 'This space already has two members' };
-    }
+    if (!auth || !db) return { success: false, error: 'Firebase not configured' };
+    const trimCode = code.trim().toUpperCase();
+    if (!trimCode) return { success: false, error: 'Please enter an invite code' };
 
+    // Validate invite code from Firestore (works cross-device)
     try {
+      const inviteRef = doc(db, 'invites', trimCode);
+      const inviteSnap = await getDoc(inviteRef);
+      if (!inviteSnap.exists()) {
+        return { success: false, error: 'Invalid invite code. Please check and try again.' };
+      }
+      const inviteData = inviteSnap.data();
+      if (inviteData.used) {
+        return { success: false, error: 'This invite code has already been used' };
+      }
+
       const cred = await signInWithPopup(auth, googleProvider);
       const gEmail = cred.user.email?.toLowerCase() ?? '';
       const gName = cred.user.displayName ?? 'Partner';
-
-      if (data.users.some((u) => u.email === gEmail)) {
-        return { success: false, error: 'This email is already registered' };
-      }
 
       const user: UserProfile = {
         id: cred.user.uid,
@@ -397,23 +427,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setData((prev) => ({
         ...prev,
         currentUserId: cred.user.uid,
-        users: [...prev.users, user],
+        users: [...prev.users.filter((u) => u.id !== cred.user.uid), user],
         onboardingComplete: true,
         couple: { ...prev.couple, person2: gName },
-        invite: { ...prev.invite, partnerJoined: true },
+        invite: { code: trimCode, partnerJoined: true },
         dates: [...prev.dates, ...starterDates],
       }));
 
+      // Mark invite as used in Firestore
+      await updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() });
+
       return { success: true };
     } catch (err: unknown) {
-      const code = (err as { code?: string }).code ?? '';
-      return { success: false, error: firebaseErrorMessage(code) };
+      const firebaseCode = (err as { code?: string }).code ?? '';
+      if (firebaseCode) return { success: false, error: firebaseErrorMessage(firebaseCode) };
+      return { success: false, error: 'Something went wrong. Please try again.' };
     }
   };
 
-  const generateInviteCode = () => {
+  const generateInviteCode = (): string => {
     const code = uuidv4().slice(0, 8).toUpperCase();
     setData((prev) => ({ ...prev, invite: { ...prev.invite, code } }));
+    // Persist invite to Firestore so partner can validate from their device
+    if (db && firebaseUser) {
+      const inviteRef = doc(db, 'invites', code);
+      setDoc(inviteRef, {
+        creatorUid: firebaseUser.uid,
+        creatorEmail: firebaseUser.email ?? '',
+        createdAt: serverTimestamp(),
+        used: false,
+      }).catch((err) => console.error('Failed to save invite to Firestore:', err));
+    }
     return code;
   };
 
@@ -721,7 +765,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     setData((prev) => ({
       ...prev,
-      reading: [...prev.reading, {
+      reading: [...(prev.reading ?? []), {
         ...item,
         id: uuidv4(),
         currentPage: 0,
@@ -734,7 +778,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateReadingItem = (id: string, updates: Partial<ReadingItem>) => {
     setData((prev) => {
-      const item = prev.reading.find((r) => r.id === id);
+      const reading = prev.reading ?? [];
+      const item = reading.find((r) => r.id === id);
       if (!item || !canEdit(myRole, item.tab)) return prev;
       const merged = { ...item, ...updates };
       // Auto-set timestamps based on status changes
@@ -745,7 +790,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         merged.status = 'finished';
         if (!merged.finishedAt) merged.finishedAt = new Date().toISOString();
       }
-      return { ...prev, reading: prev.reading.map((r) => (r.id === id ? merged : r)) };
+      return { ...prev, reading: reading.map((r) => (r.id === id ? merged : r)) };
     });
   };
 
@@ -755,14 +800,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteReadingItem = (id: string) => {
     setData((prev) => {
-      const item = prev.reading.find((r) => r.id === id);
+      const reading = prev.reading ?? [];
+      const item = reading.find((r) => r.id === id);
       if (!item || !canEdit(myRole, item.tab)) return prev;
-      // Also clean up ratings for this item
-      const newRatings = { ...prev.ratings };
+      const newRatings = { ...(prev.ratings ?? {}) };
       Object.keys(newRatings).forEach((key) => {
         if (key.startsWith(id + ':')) delete newRatings[key];
       });
-      return { ...prev, reading: prev.reading.filter((r) => r.id !== id), ratings: newRatings };
+      return { ...prev, reading: reading.filter((r) => r.id !== id), ratings: newRatings };
     });
   };
 
@@ -772,7 +817,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     setData((prev) => ({
       ...prev,
-      watchList: [...prev.watchList, {
+      watchList: [...(prev.watchList ?? []), {
         ...item,
         id: uuidv4(),
         watchedAt: item.status === 'watched' ? now : undefined,
@@ -785,7 +830,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return;
     setData((prev) => ({
       ...prev,
-      watchList: prev.watchList.map((w) => {
+      watchList: (prev.watchList ?? []).map((w) => {
         if (w.id !== id) return w;
         const merged = { ...w, ...updates };
         if (updates.status === 'watched' && !w.watchedAt) merged.watchedAt = new Date().toISOString();
@@ -797,11 +842,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteWatchItem = (id: string) => {
     if (!currentUser) return;
     setData((prev) => {
-      const newRatings = { ...prev.ratings };
+      const newRatings = { ...(prev.ratings ?? {}) };
       Object.keys(newRatings).forEach((key) => {
         if (key.startsWith(id + ':')) delete newRatings[key];
       });
-      return { ...prev, watchList: prev.watchList.filter((w) => w.id !== id), ratings: newRatings };
+      return { ...prev, watchList: (prev.watchList ?? []).filter((w) => w.id !== id), ratings: newRatings };
     });
   };
 
@@ -812,7 +857,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({
       ...prev,
       ratings: {
-        ...prev.ratings,
+        ...(prev.ratings ?? {}),
         [key]: { rating: Math.max(0, Math.min(5, rating)), review: review || undefined, ratedAt: new Date().toISOString() },
       },
     }));

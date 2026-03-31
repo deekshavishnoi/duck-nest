@@ -258,7 +258,7 @@ function DateCard({
   onEdit: () => void;
   onToggleChecklist: (itemId: string) => void;
 }) {
-  const hasDetails = idea.location || idea.notes || idea.itinerary || idea.scheduledFor || (idea.checklist && idea.checklist.length > 0);
+  const hasDetails = idea.location || idea.notes || idea.itinerary || idea.reminderNote || (idea.checklist && idea.checklist.length > 0);
   const isApproaching = idea.scheduledFor && daysUntil(idea.scheduledFor) >= 0 && daysUntil(idea.scheduledFor) <= 3;
 
   return (

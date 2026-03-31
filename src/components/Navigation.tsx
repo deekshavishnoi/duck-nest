@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: '/', label: 'Nest', icon: Heart },
   { href: '/dates', label: 'Dates', icon: CalendarHeart },
   { href: '/memories', label: 'Memories', icon: Camera },
-  { href: '/shopping', label: 'Shop', icon: ShoppingCart },
+  { href: '/shopping', label: 'Shopping', icon: ShoppingCart },
   { href: '/chores', label: 'Chores', icon: ListChecks },
   { href: '/reading', label: 'Reading', icon: BookOpen },
   { href: '/watchlist', label: 'Watch', icon: Tv },
