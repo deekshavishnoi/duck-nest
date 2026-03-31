@@ -32,6 +32,8 @@ export const DEFAULT_APP_DATA: AppData = {
   memories: [],
   shopping: [],
   chores: [],
+  reading: [],
+  watchList: [],
   scores: {
     user1: 0,
     user2: 0,

@@ -6,7 +6,8 @@ import {
   AppData, DateIdea, CoupleConfig,
   PersonMoodEntry, UserProfile, ShoppingList,
   Difficulty, DIFFICULTY_CONFIG, ShoppingTab, ChoreTab,
-  ShoppingCategory,
+  ShoppingCategory, ReadingItem, ReadingStatus, ReadingTab,
+  WatchItem, WatchType, WatchStatus,
 } from '@/types';
 import { DEFAULT_APP_DATA, STARTER_DATES } from '@/lib/seed-data';
 import { v4 as uuidv4 } from 'uuid';
@@ -72,6 +73,14 @@ interface AppContextType {
   deleteChore: (id: string) => void;
   toggleChoreComplete: (id: string) => void;
   toggleSubTask: (choreId: string, subTaskId: string) => void;
+  // Reading
+  addReadingItem: (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab }) => void;
+  updateReadingItem: (id: string, updates: Partial<ReadingItem>) => void;
+  deleteReadingItem: (id: string) => void;
+  // Watch List
+  addWatchItem: (item: { title: string; type: WatchType; status: WatchStatus; notes?: string }) => void;
+  updateWatchItem: (id: string, updates: Partial<WatchItem>) => void;
+  deleteWatchItem: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -501,6 +510,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  // ----- Reading List -----
+  const addReadingItem = (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab }) => {
+    if (!canEdit(myRole, item.tab)) return;
+    setData((prev) => ({
+      ...prev,
+      reading: [...prev.reading, { ...item, id: uuidv4(), createdAt: new Date().toISOString() }],
+    }));
+  };
+
+  const updateReadingItem = (id: string, updates: Partial<ReadingItem>) => {
+    setData((prev) => {
+      const item = prev.reading.find((r) => r.id === id);
+      if (!item || !canEdit(myRole, item.tab)) return prev;
+      return { ...prev, reading: prev.reading.map((r) => (r.id === id ? { ...r, ...updates } : r)) };
+    });
+  };
+
+  const deleteReadingItem = (id: string) => {
+    setData((prev) => {
+      const item = prev.reading.find((r) => r.id === id);
+      if (!item || !canEdit(myRole, item.tab)) return prev;
+      return { ...prev, reading: prev.reading.filter((r) => r.id !== id) };
+    });
+  };
+
+  // ----- Watch List -----
+  const addWatchItem = (item: { title: string; type: WatchType; status: WatchStatus; notes?: string }) => {
+    if (!currentUser) return;
+    setData((prev) => ({
+      ...prev,
+      watchList: [...prev.watchList, { ...item, id: uuidv4(), createdAt: new Date().toISOString() }],
+    }));
+  };
+
+  const updateWatchItem = (id: string, updates: Partial<WatchItem>) => {
+    if (!currentUser) return;
+    setData((prev) => ({
+      ...prev,
+      watchList: prev.watchList.map((w) => (w.id === id ? { ...w, ...updates } : w)),
+    }));
+  };
+
+  const deleteWatchItem = (id: string) => {
+    if (!currentUser) return;
+    setData((prev) => ({
+      ...prev,
+      watchList: prev.watchList.filter((w) => w.id !== id),
+    }));
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -530,6 +589,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addShoppingList, updateShoppingList, deleteShoppingList,
         addShoppingItem, toggleShoppingItem, updateShoppingItem, removeShoppingItem,
         addChore, deleteChore, toggleChoreComplete, toggleSubTask,
+        addReadingItem, updateReadingItem, deleteReadingItem,
+        addWatchItem, updateWatchItem, deleteWatchItem,
       }}
     >
       {children}

@@ -34,7 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <DuckDecorations />
-      <main className="relative z-10 max-w-lg mx-auto px-4 pt-6 pb-28 min-h-screen">
+      <main className="relative z-10 max-w-lg mx-auto px-4 pt-14 sm:pt-6 pb-28 sm:pb-28 min-h-screen">
         {children}
       </main>
       <Navigation />

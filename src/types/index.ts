@@ -147,6 +147,53 @@ export interface Chore {
   createdAt: string;
 }
 
+// ----- Reading List -----
+
+export type ReadingStatus = 'want-to-read' | 'reading' | 'finished';
+export type ReadingTab = 'user1' | 'user2';
+
+export interface ReadingItem {
+  id: string;
+  title: string;
+  author: string;
+  status: ReadingStatus;
+  notes?: string;
+  tab: ReadingTab;
+  createdAt: string;
+}
+
+export const READING_STATUS_CONFIG: Record<ReadingStatus, { label: string; emoji: string; color: string }> = {
+  'want-to-read': { label: 'Want to read', emoji: '📚', color: 'bg-blue-100 text-blue-700' },
+  reading: { label: 'Reading', emoji: '📖', color: 'bg-amber-100 text-amber-700' },
+  finished: { label: 'Finished', emoji: '✅', color: 'bg-green-100 text-green-700' },
+};
+
+// ----- Watch List -----
+
+export type WatchType = 'movie' | 'series' | 'documentary';
+export type WatchStatus = 'want-to-watch' | 'watching' | 'watched';
+
+export interface WatchItem {
+  id: string;
+  title: string;
+  type: WatchType;
+  status: WatchStatus;
+  notes?: string;
+  createdAt: string;
+}
+
+export const WATCH_TYPE_CONFIG: Record<WatchType, { label: string; emoji: string }> = {
+  movie: { label: 'Movie', emoji: '🎬' },
+  series: { label: 'Series', emoji: '📺' },
+  documentary: { label: 'Documentary', emoji: '🎞️' },
+};
+
+export const WATCH_STATUS_CONFIG: Record<WatchStatus, { label: string; emoji: string; color: string }> = {
+  'want-to-watch': { label: 'Want to watch', emoji: '🍿', color: 'bg-purple-100 text-purple-700' },
+  watching: { label: 'Watching', emoji: '👀', color: 'bg-amber-100 text-amber-700' },
+  watched: { label: 'Watched', emoji: '✅', color: 'bg-green-100 text-green-700' },
+};
+
 // ----- Invite -----
 
 export interface InviteState {
@@ -187,5 +234,7 @@ export interface AppData {
   memories: Memory[];
   shopping: ShoppingList[];
   chores: Chore[];
+  reading: ReadingItem[];
+  watchList: WatchItem[];
   scores: Scores;
 }
