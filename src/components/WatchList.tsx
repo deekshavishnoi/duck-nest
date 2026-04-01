@@ -23,6 +23,7 @@ export default function WatchList() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<WatchStatus | 'all'>('all');
   const [showStats, setShowStats] = useState(false);
+  const [addError, setAddError] = useState('');
 
   const allItems = data.watchList ?? [];
   const items = filterStatus === 'all' ? allItems : allItems.filter((w) => w.status === filterStatus);
@@ -71,8 +72,18 @@ export default function WatchList() {
       <AnimatePresence>
         {showAdd && (
           <AddWatchForm
-            onAdd={(item) => { try { addWatchItem(item); setShowAdd(false); } catch (e) { console.error('Failed to add watch item:', e); } }}
-            onCancel={() => setShowAdd(false)}
+            onAdd={(item) => {
+              try {
+                setAddError('');
+                addWatchItem(item);
+                setShowAdd(false);
+              } catch (e) {
+                console.error('Failed to add watch item:', e);
+                setAddError('Failed to add item. Please try again.');
+              }
+            }}
+            onCancel={() => { setShowAdd(false); setAddError(''); }}
+            error={addError}
           />
         )}
       </AnimatePresence>
@@ -91,7 +102,7 @@ export default function WatchList() {
         </motion.div>
       ) : (
         <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {items.map((item) => (
               <WatchCard
                 key={item.id}
@@ -135,9 +146,11 @@ function FilterButton({ label, emoji, count, active, onClick }: {
 function AddWatchForm({
   onAdd,
   onCancel,
+  error,
 }: {
   onAdd: (item: { title: string; type: WatchType; status: WatchStatus; notes?: string }) => void;
   onCancel: () => void;
+  error?: string;
 }) {
   const [title, setTitle] = useState('');
   const [type, setType] = useState<WatchType>('movie');
@@ -164,6 +177,9 @@ function AddWatchForm({
           <X className="w-4 h-4" />
         </button>
       </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-2 rounded-xl">{error}</div>
+      )}
       <input
         className="duck-input w-full"
         placeholder="Title"

@@ -76,8 +76,8 @@ export default function Navigation() {
                         className={cn(
                           'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors',
                           isActive
-                            ? 'bg-amber-50/80 text-amber-700 font-semibold'
-                            : 'text-slate-400 hover:bg-amber-50/50 hover:text-slate-600 font-medium'
+                            ? 'bg-blue-50/60 text-slate-700 font-semibold border border-blue-100/50'
+                            : 'text-slate-400 hover:bg-blue-50/30 hover:text-slate-600 font-medium'
                         )}
                       >
                         <Icon className="w-4.5 h-4.5" strokeWidth={isActive ? 2.5 : 2} />
@@ -103,18 +103,18 @@ export default function Navigation() {
                 href={href}
                 className={cn(
                   'flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-colors relative min-w-0 flex-shrink-0',
-                  isActive ? 'text-amber-700' : 'text-slate-400/60 hover:text-amber-500'
+                  isActive ? 'text-slate-700' : 'text-slate-400/60 hover:text-slate-500'
                 )}
               >
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill"
-                    className="absolute inset-0 bg-amber-50/70 rounded-xl"
+                    className="absolute inset-0 bg-blue-50/60 rounded-xl border border-blue-100/50"
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                   />
                 )}
-                <Icon className="w-4.5 h-4.5 relative z-10" strokeWidth={isActive ? 2.5 : 1.75} />
-                <span className={cn('text-[9px] relative z-10', isActive ? 'font-semibold' : 'font-medium')}>{label}</span>
+                <Icon className="w-4.5 h-4.5 relative z-10" strokeWidth={isActive ? 2.2 : 1.75} />
+                <span className={cn('text-[9px] relative z-10', isActive ? 'font-semibold text-blue-600/70' : 'font-medium')}>{label}</span>
               </Link>
             );
           })}

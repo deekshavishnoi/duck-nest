@@ -59,9 +59,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, isLoading, data } = useApp();
 
   // Detect invite link in URL (partner clicking shared link)
-  const inviteFromURL = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search).get('invite')
-    : null;
+  // Use state to avoid stale reads after history.replaceState
+  const [inviteFromURL] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('invite');
+  });
 
   // Still loading from localStorage + Firebase — show splash
   if (isLoading) {
@@ -79,9 +81,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Not logged in → show onboarding / auth
-  // OR invite link in URL and partner hasn't joined yet → show join flow
-  if (!isLoggedIn || (inviteFromURL && !data.invite.partnerJoined)) {
+  // Fully authenticated and onboarding complete → show app
+  // (skip the invite check if partner already joined or user is logged in with completed onboarding)
+  const showOnboarding = !isLoggedIn
+    || (!data.onboardingComplete && inviteFromURL && !data.invite.partnerJoined);
+
+  if (showOnboarding) {
     return <Onboarding />;
   }
 

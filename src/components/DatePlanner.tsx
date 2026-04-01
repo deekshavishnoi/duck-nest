@@ -319,11 +319,9 @@ function DateCard({
             </div>
           </div>
           <div className="flex gap-1 flex-shrink-0">
-            {hasDetails && (
-              <button onClick={onToggleExpand} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-600 hover:bg-blue-100 transition-colors">
-                {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-            )}
+            <button onClick={onToggleExpand} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-600 hover:bg-blue-100 transition-colors">
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
             <button onClick={onEdit} className="p-1.5 rounded-lg bg-blue-50 text-slate-300 hover:text-blue-400 hover:bg-blue-50 transition-colors">
               <Pencil className="w-4 h-4" />
             </button>
@@ -347,7 +345,7 @@ function DateCard({
 
       {/* Expanded Details */}
       <AnimatePresence>
-        {expanded && hasDetails && (
+        {expanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -355,6 +353,9 @@ function DateCard({
             className="border-t border-blue-100"
           >
             <div className="p-4 pt-3 space-y-2.5 bg-blue-50/30">
+              {!hasDetails && (
+                <p className="text-xs text-slate-400 italic text-center py-2">No additional details yet — tap edit to add some! 🐥</p>
+              )}
               {idea.location && (
                 <div className="flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />

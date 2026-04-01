@@ -24,6 +24,7 @@ export default function ReadingList() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
+  const [addError, setAddError] = useState('');
 
   const allItems = data.reading ?? [];
   const items = allItems.filter((r) => r.tab === activeTab);
@@ -92,8 +93,18 @@ export default function ReadingList() {
         {showAdd && editable && (
           <AddBookForm
             tab={activeTab}
-            onAdd={(item) => { try { addReadingItem(item); setShowAdd(false); } catch (e) { console.error('Failed to add book:', e); } }}
-            onCancel={() => setShowAdd(false)}
+            onAdd={(item) => {
+              try {
+                setAddError('');
+                addReadingItem(item);
+                setShowAdd(false);
+              } catch (e) {
+                console.error('Failed to add book:', e);
+                setAddError('Failed to add book. Please try again.');
+              }
+            }}
+            onCancel={() => { setShowAdd(false); setAddError(''); }}
+            error={addError}
           />
         )}
       </AnimatePresence>
@@ -122,7 +133,7 @@ export default function ReadingList() {
                   <span className="text-[10px] text-slate-400 ml-auto">{books.length}</span>
                 </div>
                 <div className="space-y-2">
-                  <AnimatePresence mode="popLayout">
+                  <AnimatePresence>
                     {books.map((book) => (
                       <BookCard
                         key={book.id}
@@ -155,10 +166,12 @@ function AddBookForm({
   tab,
   onAdd,
   onCancel,
+  error,
 }: {
   tab: ReadingTab;
   onAdd: (item: { title: string; author: string; status: ReadingStatus; notes?: string; tab: ReadingTab; totalPages?: number }) => void;
   onCancel: () => void;
+  error?: string;
 }) {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -190,6 +203,9 @@ function AddBookForm({
           <X className="w-4 h-4" />
         </button>
       </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-2 rounded-xl">{error}</div>
+      )}
       <input
         className="duck-input w-full"
         placeholder="Book title"

@@ -3,24 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --background: #faf8f5;
-  --bg: #faf8f5;
+  --background: #f8fafb;
+  --bg: #f8fafb;
   --foreground: #1e293b;
   --card: #ffffff;
-  --card-border: #e8e2d9;
+  --card-border: #e2e8f0;
   --accent: #3b82f6;
   --accent-soft: #eff6ff;
   --muted: #64748b;
-  --warm-glow: #fef3c7;
+  --warm-glow: #eff6ff;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(254, 243, 199, 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(219, 234, 254, 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 90%, rgba(252, 231, 243, 0.2) 0%, transparent 40%);
+    radial-gradient(ellipse at 20% 50%, rgba(219, 234, 254, 0.35) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(224, 231, 255, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(254, 243, 199, 0.15) 0%, transparent 40%);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   min-height: 100vh;
 }
@@ -85,7 +85,7 @@ input[type='range']::-moz-range-thumb {
 @layer components {
   .duck-card {
     @apply bg-[var(--card)] rounded-3xl border border-[var(--card-border)] shadow-sm relative overflow-hidden;
-    box-shadow: 0 1px 3px rgba(180, 160, 130, 0.08), 0 4px 12px rgba(180, 160, 130, 0.04);
+    box-shadow: 0 1px 3px rgba(148, 163, 184, 0.08), 0 4px 12px rgba(148, 163, 184, 0.04);
     @apply p-4;
   }
   .duck-card::before {
@@ -95,10 +95,10 @@ input[type='range']::-moz-range-thumb {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.15), rgba(147, 197, 253, 0.15), transparent);
+    background: linear-gradient(90deg, transparent, rgba(147, 197, 253, 0.2), rgba(196, 181, 253, 0.15), transparent);
   }
   .duck-card-warm {
-    @apply bg-gradient-to-br from-amber-50/60 via-white to-blue-50/40 rounded-3xl border border-amber-100/60 shadow-sm relative;
+    @apply bg-gradient-to-br from-blue-50/50 via-white to-amber-50/30 rounded-3xl border border-blue-100/50 shadow-sm relative;
   }
   .duck-btn {
     @apply bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl font-semibold transition-all active:scale-[0.98] shadow-lg shadow-blue-200/50;

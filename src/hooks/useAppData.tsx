@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import {
   AppData, DateIdea, CoupleConfig,
@@ -118,6 +118,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [rawData, setData, isLoaded] = useLocalStorage<AppData>('duckspace-data-v1', DEFAULT_APP_DATA);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  // Direct ref so join functions can force-set the user synchronously
+  const firebaseUserRef = useRef<FirebaseUser | null>(null);
+  const setFirebaseUserSync = (user: FirebaseUser | null) => {
+    firebaseUserRef.current = user;
+    setFirebaseUser(user);
+  };
 
   // Migrate stored data: ensure all fields from DEFAULT_APP_DATA exist
   // This prevents crashes when setData callbacks spread newly-added arrays (e.g. prev.reading)
@@ -143,7 +149,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
     const unsub = onAuthStateChanged(auth, (user) => {
-      setFirebaseUser(user);
+      setFirebaseUserSync(user);
       setAuthChecked(true);
       // Sync Firebase UID → localStorage currentUserId
       if (user) {
@@ -221,6 +227,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const trimEmail = email.trim().toLowerCase();
     try {
       const cred = await signInWithEmailAndPassword(auth, trimEmail, password);
+      setFirebaseUserSync(cred.user);
       // Ensure local profile exists
       const existing = data.users.find((u) => u.id === cred.user.uid || u.email === trimEmail);
       if (existing) {
@@ -237,6 +244,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!auth) return { success: false, error: 'Firebase not configured' };
     try {
       const cred = await signInWithPopup(auth, googleProvider);
+      setFirebaseUserSync(cred.user);
       const gEmail = cred.user.email?.toLowerCase() ?? '';
       const gName = cred.user.displayName ?? 'User';
       // Check if a profile already exists
@@ -295,6 +303,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     try {
       const cred = await createUserWithEmailAndPassword(auth, trimEmail, password);
+      setFirebaseUserSync(cred.user);
       // Send verification email
       await sendEmailVerification(cred.user);
 
@@ -344,17 +353,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (inviteSnap.exists() && !inviteSnap.data().used) {
           firestoreValid = true;
         }
-      } catch {
-        // Firestore read failed (permission denied, network, etc.) — continue with local check
+      } catch (firestoreErr) {
+        // Firestore read failed — log for debugging in production
+        console.warn('Invite Firestore check failed:', firestoreErr);
       }
     }
 
     if (!localValid && !firestoreValid) {
-      return { success: false, error: 'Invalid invite code. Please check and try again.' };
+      return { success: false, error: 'Invalid or expired invite code. Ask your partner to resend it.' };
     }
 
     try {
       const cred = await createUserWithEmailAndPassword(auth, trimEmail, password);
+      // Explicitly set firebaseUser to prevent race with onAuthStateChanged
+      setFirebaseUserSync(cred.user);
       // Fire-and-forget: don't let verification email hang the join flow
       sendEmailVerification(cred.user).catch(() => {});
 
@@ -421,17 +433,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (inviteSnap.exists() && !inviteSnap.data().used) {
           firestoreValid = true;
         }
-      } catch {
-        // Firestore read failed — continue with local check
+      } catch (firestoreErr) {
+        // Firestore read failed — log for debugging
+        console.warn('Invite Firestore check failed:', firestoreErr);
       }
     }
 
     if (!localValid && !firestoreValid) {
-      return { success: false, error: 'Invalid invite code. Please check and try again.' };
+      return { success: false, error: 'Invalid or expired invite code. Ask your partner to resend it.' };
     }
 
     try {
       const cred = await signInWithPopup(auth, googleProvider);
+      // Explicitly set firebaseUser to prevent race with onAuthStateChanged
+      setFirebaseUserSync(cred.user);
       const gEmail = cred.user.email?.toLowerCase() ?? '';
       const gName = cred.user.displayName ?? 'Partner';
 
