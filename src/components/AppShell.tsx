@@ -56,7 +56,12 @@ function EmailVerificationBanner() {
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn, isLoading } = useApp();
+  const { isLoggedIn, isLoading, data } = useApp();
+
+  // Detect invite link in URL (partner clicking shared link)
+  const inviteFromURL = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('invite')
+    : null;
 
   // Still loading from localStorage + Firebase — show splash
   if (isLoading) {
@@ -75,7 +80,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // Not logged in → show onboarding / auth
-  if (!isLoggedIn) {
+  // OR invite link in URL and partner hasn't joined yet → show join flow
+  if (!isLoggedIn || (inviteFromURL && !data.invite.partnerJoined)) {
     return <Onboarding />;
   }
 

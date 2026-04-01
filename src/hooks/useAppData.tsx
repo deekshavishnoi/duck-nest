@@ -322,28 +322,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const joinWithInvite = async (code: string, name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    if (!auth || !db) return { success: false, error: 'Firebase not configured' };
+    if (!auth) return { success: false, error: 'Firebase not configured' };
     const trimCode = code.trim().toUpperCase();
     if (!trimCode) return { success: false, error: 'Please enter an invite code' };
 
-    // Validate invite code from Firestore (works cross-device)
+    const trimEmail = email.trim().toLowerCase();
+    const trimName = name.trim();
+    if (!trimName) return { success: false, error: 'Name is required' };
+    if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) return { success: false, error: 'Valid email is required' };
+    if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters' };
+
+    // Validate invite code: local first (same-device), Firestore fallback (cross-device)
+    const localValid = data.invite.code === trimCode && !data.invite.partnerJoined;
+    let firestoreValid = false;
+    let inviteRef: ReturnType<typeof doc> | null = null;
+
+    if (!localValid && db) {
+      try {
+        inviteRef = doc(db, 'invites', trimCode);
+        const inviteSnap = await getDoc(inviteRef);
+        if (inviteSnap.exists() && !inviteSnap.data().used) {
+          firestoreValid = true;
+        }
+      } catch {
+        // Firestore read failed (permission denied, network, etc.) — continue with local check
+      }
+    }
+
+    if (!localValid && !firestoreValid) {
+      return { success: false, error: 'Invalid invite code. Please check and try again.' };
+    }
+
     try {
-      const inviteRef = doc(db, 'invites', trimCode);
-      const inviteSnap = await getDoc(inviteRef);
-      if (!inviteSnap.exists()) {
-        return { success: false, error: 'Invalid invite code. Please check and try again.' };
-      }
-      const inviteData = inviteSnap.data();
-      if (inviteData.used) {
-        return { success: false, error: 'This invite code has already been used' };
-      }
-
-      const trimEmail = email.trim().toLowerCase();
-      const trimName = name.trim();
-      if (!trimName) return { success: false, error: 'Name is required' };
-      if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) return { success: false, error: 'Valid email is required' };
-      if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters' };
-
       const cred = await createUserWithEmailAndPassword(auth, trimEmail, password);
       // Fire-and-forget: don't let verification email hang the join flow
       sendEmailVerification(cred.user).catch(() => {});
@@ -375,8 +385,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dates: [...prev.dates, ...starterDates],
       }));
 
-      // Fire-and-forget: don't let Firestore update hang the join flow
-      updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
+      // Fire-and-forget: mark invite as used in Firestore
+      if (db) {
+        const ref = inviteRef || doc(db, 'invites', trimCode);
+        updateDoc(ref, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
+      }
+
+      // Clean invite param from URL
+      if (typeof window !== 'undefined' && window.location.search.includes('invite')) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
 
       return { success: true };
     } catch (err: unknown) {
@@ -387,22 +405,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const joinWithInviteGoogle = async (code: string): Promise<{ success: boolean; error?: string }> => {
-    if (!auth || !db) return { success: false, error: 'Firebase not configured' };
+    if (!auth) return { success: false, error: 'Firebase not configured' };
     const trimCode = code.trim().toUpperCase();
     if (!trimCode) return { success: false, error: 'Please enter an invite code' };
 
-    // Validate invite code from Firestore (works cross-device)
-    try {
-      const inviteRef = doc(db, 'invites', trimCode);
-      const inviteSnap = await getDoc(inviteRef);
-      if (!inviteSnap.exists()) {
-        return { success: false, error: 'Invalid invite code. Please check and try again.' };
-      }
-      const inviteData = inviteSnap.data();
-      if (inviteData.used) {
-        return { success: false, error: 'This invite code has already been used' };
-      }
+    // Validate invite code: local first (same-device), Firestore fallback (cross-device)
+    const localValid = data.invite.code === trimCode && !data.invite.partnerJoined;
+    let firestoreValid = false;
+    let inviteRef: ReturnType<typeof doc> | null = null;
 
+    if (!localValid && db) {
+      try {
+        inviteRef = doc(db, 'invites', trimCode);
+        const inviteSnap = await getDoc(inviteRef);
+        if (inviteSnap.exists() && !inviteSnap.data().used) {
+          firestoreValid = true;
+        }
+      } catch {
+        // Firestore read failed — continue with local check
+      }
+    }
+
+    if (!localValid && !firestoreValid) {
+      return { success: false, error: 'Invalid invite code. Please check and try again.' };
+    }
+
+    try {
       const cred = await signInWithPopup(auth, googleProvider);
       const gEmail = cred.user.email?.toLowerCase() ?? '';
       const gName = cred.user.displayName ?? 'Partner';
@@ -435,8 +463,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dates: [...prev.dates, ...starterDates],
       }));
 
-      // Fire-and-forget: don't let Firestore update hang the join flow
-      updateDoc(inviteRef, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
+      // Fire-and-forget: mark invite as used in Firestore
+      if (db) {
+        const ref = inviteRef || doc(db, 'invites', trimCode);
+        updateDoc(ref, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
+      }
+
+      // Clean invite param from URL
+      if (typeof window !== 'undefined' && window.location.search.includes('invite')) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
 
       return { success: true };
     } catch (err: unknown) {
@@ -449,6 +485,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const generateInviteCode = (): string => {
     // Re-use existing code if already generated and not used
     if (data.invite.code && !data.invite.partnerJoined) {
+      // Always ensure Firestore entry exists (handles case where first write failed)
+      if (db && firebaseUser) {
+        const inviteRef = doc(db, 'invites', data.invite.code);
+        setDoc(inviteRef, {
+          creatorUid: firebaseUser.uid,
+          creatorEmail: firebaseUser.email ?? '',
+          createdAt: serverTimestamp(),
+          used: false,
+        }, { merge: true }).catch(() => {});
+      }
       return data.invite.code;
     }
     const code = uuidv4().slice(0, 8).toUpperCase();
@@ -461,9 +507,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         creatorEmail: firebaseUser.email ?? '',
         createdAt: serverTimestamp(),
         used: false,
-      }).catch(() => {
-        // Firestore write failed — code still works locally but won't work cross-device
-      });
+      }).catch(() => {});
     }
     return code;
   };
