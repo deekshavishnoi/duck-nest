@@ -82,9 +82,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // Fully authenticated and onboarding complete → show app
-  // (skip the invite check if partner already joined or user is logged in with completed onboarding)
+  // Show onboarding if not logged in, or if accessing via invite link without having joined yet
   const showOnboarding = !isLoggedIn
-    || (!data.onboardingComplete && inviteFromURL && !data.invite.partnerJoined);
+    || (inviteFromURL && !data.invite.partnerJoined && !data.onboardingComplete);
 
   if (showOnboarding) {
     return <Onboarding />;

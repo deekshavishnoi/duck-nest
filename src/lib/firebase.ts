@@ -2,6 +2,7 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
+  EmailAuthProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -9,6 +10,8 @@ import {
   sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
+  updatePassword,
+  reauthenticateWithCredential,
   type User,
   type Auth,
 } from 'firebase/auth';
@@ -48,6 +51,7 @@ export {
   auth,
   db,
   googleProvider,
+  EmailAuthProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -55,6 +59,8 @@ export {
   sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
+  updatePassword,
+  reauthenticateWithCredential,
   doc,
   getDoc,
   setDoc,

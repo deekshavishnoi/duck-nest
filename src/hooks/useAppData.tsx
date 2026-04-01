@@ -15,6 +15,7 @@ import {
   auth,
   db,
   googleProvider,
+  EmailAuthProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -22,6 +23,8 @@ import {
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  updatePassword,
+  reauthenticateWithCredential,
   doc,
   getDoc,
   setDoc,
@@ -59,6 +62,7 @@ interface AppContextType {
   generateInviteCode: () => string;
   resendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   emailVerified: boolean;
   // Display names
   myDisplayName: string;
@@ -171,6 +175,74 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [setData]);
 
+  // Sync partner profile from Firestore (handles cross-device invite flow)
+  // When primary user has an invite code, check if partner has joined via Firestore
+  // and pull their profile into local state.
+  useEffect(() => {
+    if (!db || !isLoaded) return;
+    const inviteCode = rawData.invite?.code;
+    const hasPartner = rawData.users?.length >= 2;
+    const currentUserId = rawData.currentUserId;
+    if (!inviteCode || hasPartner || !currentUserId) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        // Check the space doc for partner profile
+        const spaceRef = doc(db, 'spaces', inviteCode);
+        const spaceSnap = await getDoc(spaceRef);
+        if (cancelled || !spaceSnap.exists()) return;
+        const spaceData = spaceSnap.data();
+
+        // Determine which profile is ours and which is the partner
+        const primaryProfile = spaceData.primaryUser;
+        const partnerProfile = spaceData.partnerUser;
+
+        if (!partnerProfile) return; // Partner hasn't joined yet
+
+        // We're the primary user — add partner to local state
+        if (primaryProfile?.id === currentUserId || spaceData.creatorUid === currentUserId) {
+          setData((prev) => {
+            // Don't add if partner already exists locally
+            if (prev.users.some((u) => u.id === partnerProfile.id)) return prev;
+            const now = new Date().toISOString();
+            const starterDates = prev.dates.length > 0 ? [] : STARTER_DATES.map((d) => ({
+              ...d,
+              id: uuidv4(),
+              done: false,
+              createdAt: now,
+            }));
+            return {
+              ...prev,
+              users: [...prev.users, partnerProfile],
+              onboardingComplete: true,
+              couple: { ...prev.couple, person2: partnerProfile.displayName || partnerProfile.name },
+              invite: { ...prev.invite, partnerJoined: true },
+              dates: [...prev.dates, ...starterDates],
+            };
+          });
+        }
+
+        // We're the partner — add primary to local state
+        if (partnerProfile?.id === currentUserId) {
+          setData((prev) => {
+            if (prev.users.some((u) => u.id === primaryProfile.id)) return prev;
+            return {
+              ...prev,
+              users: [primaryProfile, ...prev.users.filter(u => u.id !== primaryProfile.id)],
+              onboardingComplete: true,
+              couple: { ...prev.couple, person1: primaryProfile.displayName || primaryProfile.name },
+              invite: { code: inviteCode, partnerJoined: true },
+            };
+          });
+        }
+      } catch (err) {
+        console.warn('Space sync failed:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isLoaded, rawData.invite?.code, rawData.users?.length, rawData.currentUserId, setData]);
+
   // Merge with defaults so newly added fields are always present
   const data: AppData = useMemo(() => ({ ...DEFAULT_APP_DATA, ...rawData }), [rawData]);
 
@@ -232,6 +304,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const existing = data.users.find((u) => u.id === cred.user.uid || u.email === trimEmail);
       if (existing) {
         setData((prev) => ({ ...prev, currentUserId: cred.user.uid }));
+      } else {
+        // Returning user on new device — create local profile
+        const user: UserProfile = {
+          id: cred.user.uid,
+          name: cred.user.displayName || trimEmail.split('@')[0],
+          email: trimEmail,
+          emailVerified: cred.user.emailVerified,
+          avatarUrl: cred.user.photoURL ?? undefined,
+          role: 'primary',
+          joinedAt: new Date().toISOString(),
+        };
+        setData((prev) => ({
+          ...prev,
+          currentUserId: cred.user.uid,
+          users: [...prev.users, user],
+        }));
       }
       return { success: true };
     } catch (err: unknown) {
@@ -379,6 +467,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         joinedAt: new Date().toISOString(),
       };
 
+      // Fetch primary user profile from Firestore (cross-device sync)
+      let primaryUser: UserProfile | null = null;
+      if (db) {
+        try {
+          const spaceSnap = await getDoc(doc(db, 'spaces', trimCode));
+          if (spaceSnap.exists() && spaceSnap.data().primaryUser) {
+            primaryUser = spaceSnap.data().primaryUser as UserProfile;
+          }
+        } catch { /* proceed without primary profile */ }
+      }
+
       const now = new Date().toISOString();
       const starterDates = STARTER_DATES.map((d) => ({
         ...d,
@@ -387,20 +486,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
         createdAt: now,
       }));
 
-      setData((prev) => ({
-        ...prev,
-        currentUserId: cred.user.uid,
-        users: [...prev.users.filter((u) => u.id !== cred.user.uid), user],
-        onboardingComplete: true,
-        couple: { ...prev.couple, person2: trimName },
-        invite: { code: trimCode, partnerJoined: true },
-        dates: [...prev.dates, ...starterDates],
-      }));
+      setData((prev) => {
+        const existingUsers = prev.users.filter((u) => u.id !== cred.user.uid);
+        // If we fetched primary user from Firestore and they're not in local state, add them
+        const users = primaryUser && !existingUsers.some(u => u.id === primaryUser!.id)
+          ? [primaryUser!, user]
+          : [...existingUsers, user];
+        const primaryName = primaryUser?.displayName || primaryUser?.name || prev.couple.person1;
+        return {
+          ...prev,
+          currentUserId: cred.user.uid,
+          users,
+          onboardingComplete: true,
+          couple: { ...prev.couple, person1: primaryName, person2: trimName },
+          invite: { code: trimCode, partnerJoined: true },
+          dates: [...prev.dates, ...starterDates],
+        };
+      });
 
-      // Fire-and-forget: mark invite as used in Firestore
+      // Fire-and-forget: mark invite as used + store partner profile in Firestore
       if (db) {
         const ref = inviteRef || doc(db, 'invites', trimCode);
         updateDoc(ref, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
+        // Store partner profile in spaces for primary user to pick up
+        const spaceRef = doc(db, 'spaces', trimCode);
+        setDoc(spaceRef, {
+          partnerUser: {
+            id: user.id, name: user.name, email: user.email,
+            role: user.role, joinedAt: user.joinedAt, emailVerified: user.emailVerified,
+          },
+          updatedAt: serverTimestamp(),
+        }, { merge: true }).catch(() => {});
       }
 
       // Clean invite param from URL
@@ -460,6 +576,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         joinedAt: new Date().toISOString(),
       };
 
+      // Fetch primary user profile from Firestore (cross-device sync)
+      let primaryUser: UserProfile | null = null;
+      if (db) {
+        try {
+          const spaceSnap = await getDoc(doc(db, 'spaces', trimCode));
+          if (spaceSnap.exists() && spaceSnap.data().primaryUser) {
+            primaryUser = spaceSnap.data().primaryUser as UserProfile;
+          }
+        } catch { /* proceed without primary profile */ }
+      }
+
       const now = new Date().toISOString();
       const starterDates = STARTER_DATES.map((d) => ({
         ...d,
@@ -468,20 +595,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
         createdAt: now,
       }));
 
-      setData((prev) => ({
-        ...prev,
-        currentUserId: cred.user.uid,
-        users: [...prev.users.filter((u) => u.id !== cred.user.uid), user],
-        onboardingComplete: true,
-        couple: { ...prev.couple, person2: gName },
-        invite: { code: trimCode, partnerJoined: true },
-        dates: [...prev.dates, ...starterDates],
-      }));
+      setData((prev) => {
+        const existingUsers = prev.users.filter((u) => u.id !== cred.user.uid);
+        const users = primaryUser && !existingUsers.some(u => u.id === primaryUser!.id)
+          ? [primaryUser!, user]
+          : [...existingUsers, user];
+        const primaryName = primaryUser?.displayName || primaryUser?.name || prev.couple.person1;
+        return {
+          ...prev,
+          currentUserId: cred.user.uid,
+          users,
+          onboardingComplete: true,
+          couple: { ...prev.couple, person1: primaryName, person2: gName },
+          invite: { code: trimCode, partnerJoined: true },
+          dates: [...prev.dates, ...starterDates],
+        };
+      });
 
-      // Fire-and-forget: mark invite as used in Firestore
+      // Fire-and-forget: mark invite as used + store partner profile in Firestore
       if (db) {
         const ref = inviteRef || doc(db, 'invites', trimCode);
         updateDoc(ref, { used: true, partnerUid: cred.user.uid, usedAt: serverTimestamp() }).catch(() => {});
+        const spaceRef = doc(db, 'spaces', trimCode);
+        setDoc(spaceRef, {
+          partnerUser: {
+            id: user.id, name: user.name, email: user.email,
+            avatarUrl: user.avatarUrl, role: user.role, joinedAt: user.joinedAt, emailVerified: true,
+          },
+          updatedAt: serverTimestamp(),
+        }, { merge: true }).catch(() => {});
       }
 
       // Clean invite param from URL
@@ -500,7 +642,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const generateInviteCode = (): string => {
     // Re-use existing code if already generated and not used
     if (data.invite.code && !data.invite.partnerJoined) {
-      // Always ensure Firestore entry exists (handles case where first write failed)
+      // Always ensure Firestore entries exist (handles case where first write failed)
       if (db && firebaseUser) {
         const inviteRef = doc(db, 'invites', data.invite.code);
         setDoc(inviteRef, {
@@ -509,6 +651,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
           createdAt: serverTimestamp(),
           used: false,
         }, { merge: true }).catch(() => {});
+        // Also persist primary profile to spaces collection for cross-device sync
+        const spaceRef = doc(db, 'spaces', data.invite.code);
+        const primaryProfile = currentUser ? {
+          id: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          avatarUrl: currentUser.avatarUrl,
+          role: currentUser.role,
+          joinedAt: currentUser.joinedAt,
+        } : null;
+        if (primaryProfile) {
+          setDoc(spaceRef, {
+            creatorUid: firebaseUser.uid,
+            primaryUser: primaryProfile,
+            createdAt: serverTimestamp(),
+          }, { merge: true }).catch(() => {});
+        }
       }
       return data.invite.code;
     }
@@ -523,6 +683,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
         createdAt: serverTimestamp(),
         used: false,
       }).catch(() => {});
+      // Persist primary profile to spaces collection for cross-device sync
+      const spaceRef = doc(db, 'spaces', code);
+      const primaryProfile = currentUser ? {
+        id: currentUser.id,
+        name: currentUser.name,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+        avatarUrl: currentUser.avatarUrl,
+        role: currentUser.role,
+        joinedAt: currentUser.joinedAt,
+      } : null;
+      if (primaryProfile) {
+        setDoc(spaceRef, {
+          creatorUid: firebaseUser.uid,
+          primaryUser: primaryProfile,
+          createdAt: serverTimestamp(),
+        }).catch(() => {});
+      }
     }
     return code;
   };
@@ -543,10 +721,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const trimEmail = email.trim().toLowerCase();
     if (!trimEmail) return { success: false, error: 'Please enter your email' };
     try {
-      await sendPasswordResetEmail(auth, trimEmail);
+      const actionCodeSettings = {
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://duck-nest.vercel.app',
+        handleCodeInApp: false,
+      };
+      await sendPasswordResetEmail(auth, trimEmail, actionCodeSettings);
       return { success: true };
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? '';
+      // Don't reveal whether the email exists for security
+      if (code === 'auth/user-not-found') {
+        return { success: true }; // Still show success to avoid email enumeration
+      }
+      return { success: false, error: firebaseErrorMessage(code) };
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    if (!auth || !firebaseUser) return { success: false, error: 'Not logged in' };
+    if (!firebaseUser.email) return { success: false, error: 'No email associated with this account. Google users should use Google to sign in.' };
+    if (newPassword.length < 6) return { success: false, error: 'New password must be at least 6 characters' };
+    try {
+      // Re-authenticate first (Firebase requires this for sensitive operations)
+      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+      await updatePassword(firebaseUser, newPassword);
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? '';
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+      if (code === 'auth/weak-password') {
+        return { success: false, error: 'New password is too weak. Use at least 6 characters' };
+      }
+      if (code === 'auth/requires-recent-login') {
+        return { success: false, error: 'Please log out and log back in, then try again' };
+      }
       return { success: false, error: firebaseErrorMessage(code) };
     }
   };
@@ -958,6 +1169,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         generateInviteCode,
         resendVerificationEmail,
         resetPassword,
+        changePassword,
         emailVerified,
         myDisplayName,
         partnerDisplayName,

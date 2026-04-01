@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useApp } from '@/hooks/useAppData';
 import { UserProfile } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
-import { User, Mail, Cake, Copy, Check, Link2, LogOut, Heart, Pencil } from 'lucide-react';
+import { User, Mail, Cake, Copy, Check, Link2, LogOut, Heart, Pencil, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function ProfileSettings() {
   const {
@@ -106,6 +106,9 @@ export default function ProfileSettings() {
           </p>
         )}
       </motion.div>
+
+      {/* Change Password */}
+      <ChangePasswordSection />
 
       {/* Log Out */}
       <motion.div
@@ -413,6 +416,152 @@ function NicknameEditor({
             Cancel
           </button>
         </div>
+      )}
+    </motion.div>
+  );
+}
+
+/* ---- Change Password ---- */
+function PasswordField({
+  value,
+  onChange,
+  placeholder,
+  name,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+  name: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        name={name}
+        autoComplete={name === 'current-password' ? 'current-password' : 'new-password'}
+        required
+        className="w-full duck-input pr-9"
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        tabIndex={-1}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-500 transition-colors"
+      >
+        {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+      </button>
+    </div>
+  );
+}
+
+function ChangePasswordSection() {
+  const { changePassword, firebaseUser } = useApp();
+  const [open, setOpen] = useState(false);
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Google-only users can't change password
+  const isGoogleOnly = firebaseUser?.providerData?.every(p => p.providerId === 'google.com');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
+
+    if (newPw !== confirmPw) {
+      setError('New passwords do not match');
+      return;
+    }
+    if (newPw.length < 6) {
+      setError('New password must be at least 6 characters');
+      return;
+    }
+    if (currentPw === newPw) {
+      setError('New password must be different from current password');
+      return;
+    }
+
+    setLoading(true);
+    const result = await changePassword(currentPw, newPw);
+    setLoading(false);
+
+    if (result.success) {
+      setSuccess(true);
+      setCurrentPw('');
+      setNewPw('');
+      setConfirmPw('');
+      setTimeout(() => {
+        setSuccess(false);
+        setOpen(false);
+      }, 2000);
+    } else {
+      setError(result.error || 'Something went wrong');
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.35 }}
+      className="duck-card p-5"
+    >
+      <h2 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+        <Lock className="w-4 h-4 text-blue-500" />
+        Change Password
+      </h2>
+
+      {isGoogleOnly ? (
+        <p className="text-xs text-slate-400">
+          You signed in with Google — password is managed by Google.
+        </p>
+      ) : !open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="text-xs text-blue-500 hover:text-blue-600 font-medium"
+        >
+          Update your password
+        </button>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-3 mt-2">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-2.5 rounded-xl">{error}</div>
+          )}
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-600 text-xs p-2.5 rounded-xl flex items-center gap-1">
+              <Check className="w-3.5 h-3.5" /> Password updated!
+            </div>
+          )}
+
+          <PasswordField value={currentPw} onChange={setCurrentPw} placeholder="Current password" name="current-password" />
+          <PasswordField value={newPw} onChange={setNewPw} placeholder="New password (min 6 chars)" name="new-password" />
+          <PasswordField value={confirmPw} onChange={setConfirmPw} placeholder="Confirm new password" name="confirm-password" />
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="text-xs duck-btn px-4 py-2 disabled:opacity-60"
+            >
+              {loading ? 'Updating...' : 'Update password'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setError(''); setSuccess(false); }}
+              className="text-xs bg-blue-100 text-blue-500 px-4 py-2 rounded-xl hover:bg-blue-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       )}
     </motion.div>
   );
