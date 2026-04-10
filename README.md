@@ -1,6 +1,6 @@
 # DuckNest 🦆
 
-A cozy, duck-themed shared space for couples. Mood sync, date planning, memories, shopping lists & chores — all in one private little nest.
+A cozy, duck-themed shared space for partners. Date planning, memories, shopping lists & chores — all in one private little nest.
 
 ## Features
 
